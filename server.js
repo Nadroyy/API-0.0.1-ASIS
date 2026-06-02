@@ -3961,6 +3961,79 @@ function resolvePersonPhotoInfo(pin, photoDbValue) {
 }
 
 function updateAdmsDevice(sn, ip, originalUrl, method, userAgent, options = {}) {
+    const normalizedSn = String(sn || '').trim();
+    if (!normalizedSn) {
+        return;
+    }
+
+    void updateMysqlAdmsDeviceState({
+        sn: normalizedSn,
+        ip,
+        originalUrl,
+        method,
+        userAgent,
+        options
+    }).catch(error => {
+        logStore.error('adms.device.mysql-update.error', {
+            sn: normalizedSn,
+            ip,
+            originalUrl,
+            method,
+            userAgent,
+            error: error.message
+        });
+    });
+
+    try {
+        updateAdmsDeviceAuditFile(normalizedSn, ip, originalUrl, method, userAgent, options);
+    } catch (error) {
+        logStore.warn('adms.device.audit-file.skipped', {
+            sn: normalizedSn,
+            error: error.message
+        });
+    }
+}
+
+async function updateMysqlAdmsDeviceState({ sn, ip, originalUrl, method, userAgent, options = {} }) {
+    const hasDispositivosTable = await mysqlTableExists('dispositivos');
+    if (!hasDispositivosTable) {
+        logStore.warn('adms.device.mysql-table-missing', {
+            sn,
+            table: 'dispositivos'
+        });
+        return;
+    }
+
+    const [result] = await db.query(
+        `UPDATE dispositivos
+         SET ip = ?, ultima_conexion = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+         WHERE numero_serie = ?`,
+        [String(ip || '').trim() || null, sn]
+    );
+
+    if (!result || result.affectedRows === 0) {
+        logStore.warn('adms.device.unregistered', {
+            sn,
+            ip,
+            originalUrl,
+            method,
+            userAgent,
+            userCount: options.userCount || null,
+            faceCount: options.faceCount || null,
+            multiBioDataCount: options.multiBioDataCount || null,
+            multiBioPhotoCount: options.multiBioPhotoCount || null
+        });
+        return;
+    }
+
+    logStore.info('adms.device.mysql-updated', {
+        sn,
+        ip,
+        affectedRows: result.affectedRows
+    });
+}
+
+function updateAdmsDeviceAuditFile(sn, ip, originalUrl, method, userAgent, options = {}) {
     const devices = readJsonLinesFile(admsDevicesLogPath);
     const now = new Date().toISOString();
     const existingIndex = devices.findIndex(d => d.sn === sn);
