@@ -178,7 +178,20 @@ app.use('/iclock', admsTrafficLogger);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-app.post('/subir-foto', upload.single('foto'), asyncHandler(async (req, res) => {
+function isLegacyUsuariosEnabled() {
+    return String(process.env.ENABLE_LEGACY_USUARIOS || '').toLowerCase() === 'true';
+}
+
+function requireLegacyUsuariosEnabled(req, res, next) {
+    if (isLegacyUsuariosEnabled()) return next();
+    return res.status(404).json({
+        ok: false,
+        message: 'Funcionalidad legacy de usuarios deshabilitada',
+        code: 'LEGACY_USUARIOS_DISABLED'
+    });
+}
+
+app.post('/subir-foto', requireLegacyUsuariosEnabled, upload.single('foto'), asyncHandler(async (req, res) => {
     await ensureLegacyUsuariosTable('/subir-foto');
     const pin = normalizePin(req.body.pin);
     const nombre = normalizeName(req.body.nombre);
@@ -216,7 +229,7 @@ app.post('/subir-foto', upload.single('foto'), asyncHandler(async (req, res) => 
     });
 }));
 
-app.post('/enviar-template', asyncHandler(async (req, res) => {
+app.post('/enviar-template', requireLegacyUsuariosEnabled, asyncHandler(async (req, res) => {
     const pin = normalizePin(req.body.pin);
     const template = typeof req.body.template === 'string' ? req.body.template.trim() : '';
 
@@ -243,7 +256,7 @@ app.post('/enviar-template', asyncHandler(async (req, res) => {
     });
 }));
 
-app.post('/actualizar-usuario', asyncHandler(async (req, res) => {
+app.post('/actualizar-usuario', requireLegacyUsuariosEnabled, asyncHandler(async (req, res) => {
     await ensureLegacyUsuariosTable('/actualizar-usuario');
     const pin = normalizePin(req.body.pin);
     const nuevoNombre = normalizeName(req.body.nuevoNombre);
@@ -998,25 +1011,25 @@ app.get('/adms/command-status/:id', asyncHandler(async (req, res) => {
     res.json(readAdmsCommandStatus(id));
 }));
 
-app.get('/usuarios', asyncHandler(async (_req, res) => {
+app.get('/usuarios', requireLegacyUsuariosEnabled, asyncHandler(async (_req, res) => {
     await ensureLegacyUsuariosTable('/usuarios');
     const [rows] = await db.query('SELECT * FROM usuarios');
     res.json(rows);
 }));
 
-app.get('/pendientes', asyncHandler(async (_req, res) => {
+app.get('/pendientes', requireLegacyUsuariosEnabled, asyncHandler(async (_req, res) => {
     await ensureLegacyUsuariosTable('/pendientes');
     const [rows] = await db.query("SELECT * FROM usuarios WHERE estado = 'pendiente'");
     res.json(rows);
 }));
 
-app.get('/activos', asyncHandler(async (_req, res) => {
+app.get('/activos', requireLegacyUsuariosEnabled, asyncHandler(async (_req, res) => {
     await ensureLegacyUsuariosTable('/activos');
     const [rows] = await db.query("SELECT * FROM usuarios WHERE estado = 'activo'");
     res.json(rows);
 }));
 
-app.get('/usuario/:pin', asyncHandler(async (req, res) => {
+app.get('/usuario/:pin', requireLegacyUsuariosEnabled, asyncHandler(async (req, res) => {
     await ensureLegacyUsuariosTable('/usuario/:pin');
     const pin = normalizePin(req.params.pin);
     if (!pin) {
@@ -1031,7 +1044,7 @@ app.get('/usuario/:pin', asyncHandler(async (req, res) => {
     res.json(rows[0]);
 }));
 
-app.get('/foto/:pin', asyncHandler(async (req, res) => {
+app.get('/foto/:pin', requireLegacyUsuariosEnabled, asyncHandler(async (req, res) => {
     await ensureLegacyUsuariosTable('/foto/:pin');
     const pin = normalizePin(req.params.pin);
     if (!pin) {
