@@ -1068,6 +1068,21 @@ app.get('/panel', (_req, res) => {
     res.sendFile(path.join(publicDir, 'adms-panel.html'));
 });
 
+function isZkTcpEnabled() {
+    return String(process.env.ENABLE_ZK_TCP || '').toLowerCase() === 'true';
+}
+
+function requireZkTcpEnabled(req, res, next) {
+    if (isZkTcpEnabled()) return next();
+    return res.status(404).json({
+        ok: false,
+        message: 'Funcionalidad TCP ZKTeco deshabilitada',
+        code: 'ZK_TCP_DISABLED'
+    });
+}
+
+app.use('/zk', requireZkTcpEnabled);
+
 app.post('/zk/connect', asyncHandler(async (req, res) => {
     await handleZkEndpoint(req, res, '/zk/connect', () => zkTcpService.connect(resolveZkOptions(req)));
 }));
