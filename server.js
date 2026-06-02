@@ -400,6 +400,14 @@ app.all('/iclock/devicecmd', asyncHandler(async (req, res) => {
 
         const acknowledgedAt = new Date().toISOString();
         const status = String(result.returnValue) === '0' ? 'accepted' : 'failed';
+        void updateMysqlAdmsCommandAck(result.id, {
+            acknowledgedAt,
+            status,
+            returnCode: result.returnValue,
+            ackDeviceSn: ackDeviceSn || null,
+            rawLine: String(result.rawLine || result.rawBody || '')
+        });
+
         const updatedEntry = updateAdmsCommandQueueEntry(result.id, {
             acknowledgedAt,
             status,
@@ -2171,6 +2179,51 @@ async function readMysqlAdmsCommandStatus(commandId) {
         updatedAt: row.updated_at || null,
         source: 'mysql'
     };
+}
+
+async function updateMysqlAdmsCommandAck(commandId, updates = {}) {
+    try {
+        const id = normalizeUnsignedBigIntText(commandId);
+        if (!id) {
+            logStore.warn('adms.command.mysql-ack.missing', {
+                commandId: commandId || null
+            });
+            return;
+        }
+
+        const [result] = await db.query(`
+            UPDATE adms_commands
+            SET status = ?,
+                return_code = ?,
+                acknowledged_at = ?,
+                ack_device_sn = ?,
+                raw_result = ?,
+                error = ?
+            WHERE id = ?
+        `, [
+            normalizeAdmsCommandStatusForMysql(updates.status),
+            updates.returnCode == null ? null : String(updates.returnCode),
+            toMysqlDateOrNull(updates.acknowledgedAt) || new Date(),
+            normalizeRecordsScopeValue(updates.ackDeviceSn) || null,
+            updates.rawLine == null ? null : String(updates.rawLine),
+            updates.error == null ? null : String(updates.error),
+            id
+        ]);
+
+        if (!result || result.affectedRows === 0) {
+            logStore.warn('adms.command.mysql-ack.missing', {
+                commandId: id
+            });
+        }
+    } catch (error) {
+        logStore.error('adms.command.mysql-ack.error', {
+            commandId: commandId || null,
+            status: updates.status || null,
+            returnCode: updates.returnCode ?? null,
+            ackDeviceSn: updates.ackDeviceSn || null,
+            error: error.message
+        });
+    }
 }
 
 function updateAdmsCommandQueueEntry(commandId, updates) {
