@@ -1,0 +1,4239 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel ADMS Beta</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1400px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .almacen-operator-shell,
+    .almacen-operator-workspace,
+    .almacen-operator-columns {
+      display: contents;
+    }
+
+    .app-header {
+      display: grid;
+      gap: 16px;
+      padding: 20px 22px;
+      background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+    }
+
+    .app-header-main {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .section-subtitle {
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
+    .app-status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #dbe2ea;
+      background: #f8fafc;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .status-pill-ok {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #047857;
+    }
+
+    .status-pill-warning {
+      background: #fffbeb;
+      border-color: #fcd34d;
+      color: #b45309;
+    }
+
+    .status-pill-error {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: minmax(320px, 0.4fr) minmax(420px, 0.6fr);
+      align-items: start;
+    }
+
+    .primary-actions,
+    .realtime-panel,
+    .lower-dashboard {
+      display: grid;
+      gap: 20px;
+      align-content: start;
+    }
+
+    .tabs-card {
+      overflow: hidden;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .section-card {
+      display: grid;
+      gap: 18px;
+    }
+
+    .section-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .section-title {
+      margin: 0;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    .lead {
+      margin: 0;
+      color: #4b5563;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .row {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .col-8 {
+      grid-column: span 8;
+    }
+
+    .col-4 {
+      grid-column: span 4;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="url"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 0.96rem;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #f9fafb;
+      color: #1f2937;
+      border: 1px solid #d1d5db;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hint {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .status {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid #d1d5db;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+
+    .preview {
+      width: 100%;
+      max-width: 280px;
+      aspect-ratio: 1 / 1;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      display: grid;
+      place-items: center;
+    }
+
+    .preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .status-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .summary-item {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #dbe2ea;
+      background: #f8fafc;
+    }
+
+    .summary-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+    }
+
+    .muted {
+      color: #6b7280;
+      font-size: 0.92rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid #d1d5db;
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .badge-ok {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #047857;
+    }
+
+    .badge-warning {
+      background: #fffbeb;
+      border-color: #fcd34d;
+      color: #b45309;
+    }
+
+    .badge-error {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    .badge-neutral {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+    }
+
+    .compact-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: #f9fafb;
+      display: grid;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .compact-card-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .compact-card-title {
+      margin: 0;
+      font-size: 1rem;
+      color: #111827;
+    }
+
+    .compact-card-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .compact-card-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .subsection-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .subsection-card {
+      border: 1px solid #dbe2ea;
+      border-radius: 14px;
+      background: #f8fafc;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .subsection-card h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .list-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .details-card {
+      border: 1px solid #dbe2ea;
+      border-radius: 16px;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+
+    .details-card-shell {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+    }
+
+    .details-card-body {
+      display: grid;
+      gap: 16px;
+      padding: 0 18px 18px;
+    }
+
+    .json-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .json-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    .json-card pre {
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      border-radius: 14px;
+      background: #111827;
+      color: #e5e7eb;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    @media (max-width: 820px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .col-8,
+      .col-4 {
+        grid-column: auto;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .status-grid,
+      .subsection-grid,
+      .json-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    body.almacen-operator-layout {
+      display: block;
+      padding: 0;
+      background: #eef2f7;
+    }
+
+    .container.almacen-operator-layout {
+      width: calc(100% - 48px);
+      max-width: 1600px;
+      margin: 24px auto;
+      gap: 18px;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-header {
+      width: 100%;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-workspace {
+      display: grid;
+      gap: 0;
+      background: #ffffff;
+      border: 1px solid #dbe2ea;
+      border-radius: 22px;
+      box-shadow: 0 10px 32px rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-columns {
+      display: grid;
+      grid-template-columns: minmax(360px, 460px) minmax(0, 1fr);
+      gap: 24px;
+      padding: 24px;
+      align-items: start;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left,
+    .container.almacen-operator-layout .almacen-operator-right {
+      min-width: 0;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-right {
+      padding-left: 24px;
+      border-left: 1px solid #e5e7eb;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left .realtime-panel.hidden {
+      display: none;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left .realtime-panel {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left #registerSection,
+    .container.almacen-operator-layout .almacen-operator-right #recordsSection,
+    .container.almacen-operator-layout #technicalSection {
+      box-shadow: none;
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left #registerSection {
+      padding: 0;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left #registerSection .row {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left #registerSection .col-8,
+    .container.almacen-operator-layout .almacen-operator-left #registerSection .col-4 {
+      grid-column: auto;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left #registerSection .grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-left #registerSection .preview {
+      width: 100%;
+      max-width: none;
+      min-height: 220px;
+      max-height: 260px;
+      aspect-ratio: auto;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-right #recordsSection {
+      padding: 0;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-right #recordsSection .grid {
+      gap: 12px;
+    }
+
+    .container.almacen-operator-layout .almacen-operator-right #personsTab .grid,
+    .container.almacen-operator-layout .almacen-operator-right #attendanceTab .grid,
+    .container.almacen-operator-layout .almacen-operator-right #commandsTab .grid,
+    .container.almacen-operator-layout .almacen-operator-right #auditTab .grid {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .container.almacen-operator-layout #technicalSection {
+      border-top: 1px solid #e5e7eb;
+      border-radius: 0;
+      padding: 24px;
+    }
+
+    @media (max-width: 1000px) {
+      .container.almacen-operator-layout {
+        width: calc(100% - 24px);
+        margin: 12px auto;
+      }
+
+      .container.almacen-operator-layout .almacen-operator-columns {
+        grid-template-columns: 1fr;
+        padding: 18px;
+      }
+
+      .container.almacen-operator-layout .almacen-operator-right {
+        padding-left: 0;
+        border-left: none;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 18px;
+      }
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .tab-button {
+      padding: 8px 16px;
+      border: none;
+      background: #f3f4f6;
+      color: #6b7280;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .tab-button.active {
+      background: #2563eb;
+      color: white;
+    }
+
+    .tab-button:hover {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .tab-button.active:hover {
+      background: #1d4ed8;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .record-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      background: #f9fafb;
+    }
+
+    .record-item h4 {
+      margin: 0 0 8px 0;
+      color: #1f2937;
+    }
+
+    .record-item p {
+      margin: 4px 0;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+
+    .pagination-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0 4px;
+    }
+
+    .pagination-meta {
+      color: #6b7280;
+      font-size: 0.92rem;
+    }
+
+    .pagination-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pagination-actions select {
+      width: auto;
+      min-width: 88px;
+      padding: 8px 10px;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    .delete-form {
+      border: 1px solid #fca5a5;
+      background: #fef2f2;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+
+    .delete-form h3 {
+      color: #dc2626;
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="card app-header almacen-operator-header">
+      <div class="app-header-main">
+        <div>
+          <h1 class="section-title">ADMS Beta</h1>
+          <div class="section-subtitle">Registro, sincronizacion y diagnostico ADMS</div>
+        </div>
+        <div class="app-status-row">
+          <div id="appHeaderSite" class="status-pill status-pill-warning">Sede: Sin contexto</div>
+          <div id="appHeaderServer" class="status-pill status-pill-warning">Servidor: Sin verificar</div>
+          <div id="appHeaderDevice" class="status-pill status-pill-warning">Destino: Sin dispositivo</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn-secondary hidden" id="operatorAdvancedToggle">Mostrar herramientas avanzadas</button>
+      </div>
+    </section>
+
+    <section class="almacen-operator-workspace">
+      <div class="almacen-operator-columns">
+    <section class="dashboard-grid almacen-operator-left">
+      <div class="primary-actions almacen-operator-shell">
+        <section id="registerSection" class="card section-card">
+          <div class="section-header">
+            <h2 class="section-title">Registrar persona</h2>
+            <div class="muted">Alta manual con foto y seguimiento de comandos ADMS.</div>
+          </div>
+          <div class="row">
+            <div class="col-8">
+              <div class="grid">
+                <div class="field">
+                  <label for="registerMode">Modo</label>
+                  <select id="registerMode">
+                    <option value="simple" selected>Registro real sin BIODATA copiada</option>
+                    <option value="completo_con_biodata">Prueba tecnica con BIODATA copiada</option>
+                  </select>
+                </div>
+                <div id="modeHint" class="hint">Registro real seguro: usa POST /adms/enroll-person y envia solo USERINFO + BIOPHOTO.</div>
+                <div class="field">
+                  <label for="pin">PIN</label>
+                  <input id="pin" type="text" placeholder="12345" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label for="name">Nombre</label>
+                  <input id="name" type="text" placeholder="Juan Perez" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label for="password">Contrasena</label>
+                  <input id="password" type="password" placeholder="********" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label for="imageFile">Imagen</label>
+                  <input id="imageFile" type="file" accept="image/*" />
+                </div>
+                <div id="sourceFacePinField" class="field">
+                  <label for="sourceFacePin">sourceFacePin</label>
+                  <input id="sourceFacePin" type="text" value="3" placeholder="3" autocomplete="off" />
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn-primary" id="registerPerson">Registrar persona</button>
+                <button class="btn-secondary" id="checkCommands">Verificar estado de comandos</button>
+              </div>
+            </div>
+            <div class="col-4">
+              <div id="imagePreview" class="preview">Vista previa</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="attendanceSection" class="card section-card">
+          <div class="section-header">
+            <h2 class="section-title">Consultar asistencia</h2>
+            <div class="muted">Busqueda puntual por PIN y rango de fechas.</div>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="attendancePin">PIN</label>
+              <input id="attendancePin" type="text" placeholder="12345" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="attendanceFrom">Desde</label>
+              <input id="attendanceFrom" type="date" />
+            </div>
+            <div class="field">
+              <label for="attendanceTo">Hasta</label>
+              <input id="attendanceTo" type="date" />
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-secondary" id="fetchAttendance">Consultar asistencia</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="realtime-panel almacen-operator-shell">
+        <section id="destinationSection" class="card section-card">
+          <div class="section-header">
+            <h2 class="section-title">Destino activo</h2>
+            <div class="muted">Resumen del reloj objetivo y del contexto por hostname.</div>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="targetDeviceSelect">Dispositivo destino</label>
+              <select id="targetDeviceSelect">
+                <option value="">Cargando dispositivos...</option>
+              </select>
+            </div>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-label">Sede activa</div>
+              <div id="selectedSiteValue">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Hostname</div>
+              <div id="siteHostnameValue">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Modo</div>
+              <div id="siteModeValue">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Dispositivo</div>
+              <div id="selectedDeviceValue">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">SN</div>
+              <div id="selectedDeviceSnValue">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Estado</div>
+              <div id="selectedDeviceStatusValue">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Ultima conexion</div>
+              <div id="selectedDeviceLastSeenValue">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Ubicacion</div>
+              <div id="selectedDeviceLocationValue">Sin resultados todavia.</div>
+            </div>
+          </div>
+          <div id="targetDeviceHint" class="hint">Selecciona el dispositivo al que se enviaran los comandos ADMS.</div>
+        </section>
+
+        <section id="trackingSection" class="card section-card">
+          <div class="section-header">
+            <h2 class="section-title">Seguimiento del registro actual</h2>
+            <div class="muted">Resumen del ultimo flujo de enrolamiento y verificacion.</div>
+          </div>
+          <div class="status-grid">
+            <div class="summary-item">
+              <div class="summary-label">Estado de registro</div>
+              <div id="estadoRegistro">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Estado de command-status</div>
+              <div id="estadoCommandStatus">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Estado de asistencia</div>
+              <div id="estadoAsistencia">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Estado del dispositivo</div>
+              <div id="estadoDispositivo">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item" id="endpointSummaryItem">
+              <div class="summary-label">Endpoint usado</div>
+              <div id="endpointUsado">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item" id="modeSummaryItem">
+              <div class="summary-label">Modo usado</div>
+              <div id="modoUsado">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">USERINFO commandId</div>
+              <div id="userCommandIdValue">Sin resultados todavia.</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">BIOPHOTO commandId</div>
+              <div id="biophotoCommandIdValue">Sin resultados todavia.</div>
+            </div>
+            <div id="biodataSummaryItem" class="summary-item">
+              <div class="summary-label">BIODATA commandId</div>
+              <div id="biodataCommandIdValue">Sin resultados todavia.</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="serverSection" class="card section-card">
+          <div class="section-header">
+            <h2 class="section-title">Estado del servidor y asistencia</h2>
+            <div class="muted">Chequeo rapido del backend y de la ultima consulta visible.</div>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-label">Base URL</div>
+              <input id="baseUrl" type="url" placeholder="http://localhost:3000" />
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Respuesta actual</div>
+              <div id="estadoServidor" class="status">Sin resultados todavia.</div>
+            </div>
+            <div id="attendanceSnapshotItem" class="summary-item">
+              <div class="summary-label">Asistencia actual</div>
+              <div id="attendanceSnapshotValue" class="status">Sin resultados todavia.</div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-secondary" id="checkHealth">Chequear salud del servidor</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="recordsSection" class="card section-card tabs-card almacen-operator-right">
+      <div class="section-header">
+        <h2 class="section-title">Registros guardados</h2>
+        <div class="muted">Consulta local de personas, auditoria, dispositivos y sincronizacion.</div>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label for="recordsScopeMode">Alcance</label>
+          <select id="recordsScopeMode">
+            <option value="device">Dispositivo actual</option>
+            <option value="all">Todos los dispositivos</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="recordsScopeSummary">Mostrando datos de</label>
+          <div id="recordsScopeSummary" class="muted">Sin resultados todavia.</div>
+        </div>
+      </div>
+      <div id="recordsScopeMessage" class="muted">Sin resultados todavia.</div>
+      <div class="tabs">
+        <button class="tab-button active" data-tab="overview" data-advanced-tab="true">Resumen</button>
+        <button class="tab-button" data-tab="persons">Personas</button>
+        <button class="tab-button" data-tab="attendance">Asistencias</button>
+        <button class="tab-button" data-tab="devices">Dispositivos</button>
+        <button class="tab-button" data-tab="commands" data-advanced-tab="true">Comandos</button>
+        <button class="tab-button" data-tab="pending" data-advanced-tab="true">Pendientes</button>
+        <button class="tab-button" data-tab="biodata" data-advanced-tab="true">BIODATA</button>
+        <button class="tab-button" data-tab="photos" data-advanced-tab="true">Fotos</button>
+        <button class="tab-button" data-tab="audit" data-advanced-tab="true">Auditoria</button>
+        <button class="tab-button" data-tab="config" data-advanced-tab="true">Configuracion ADMS</button>
+      </div>
+
+      <div id="overviewTab" class="tab-content active" data-advanced-tab="true">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-label">Total Personas</div>
+            <div id="totalPersonas">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Total Asistencias</div>
+            <div id="totalAsistencias">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Total Dispositivos</div>
+            <div id="totalDispositivos">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Total Comandos</div>
+            <div id="totalComandos">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Total Pendientes</div>
+            <div id="totalPendientes">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Total BIODATA</div>
+            <div id="totalBiodata">-</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Total Fotos</div>
+            <div id="totalFotos">-</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-secondary" id="refreshOverview">Actualizar</button>
+        </div>
+      </div>
+
+      <div id="personsTab" class="tab-content">
+        <div class="grid">
+          <div class="field">
+            <label for="personsStatusFilter">Estado</label>
+            <select id="personsStatusFilter">
+              <option value="all">Todos</option>
+              <option value="activo">Activos</option>
+              <option value="eliminado">Eliminados</option>
+              <option value="pendiente">Pendientes</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="personsTypeFilter">Tipo</label>
+            <select id="personsTypeFilter">
+              <option value="all">Todos</option>
+              <option value="with-photo">Con foto</option>
+              <option value="without-photo">Sin foto</option>
+              <option value="with-attendance">Con asistencia</option>
+              <option value="without-attendance">Sin asistencia</option>
+              <option value="with-biodata">Con BIODATA</option>
+              <option value="without-biodata">Sin BIODATA</option>
+              <option value="test-users">Usuarios de prueba</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="personsSearchInput">Buscar</label>
+            <input id="personsSearchInput" type="text" placeholder="PIN o nombre" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="hideDeletedPersons">Opciones</label>
+            <div><input id="hideDeletedPersons" type="checkbox" /> Ocultar eliminados</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-secondary" id="loadPersons">Cargar Personas</button>
+          <button class="btn-secondary" id="cleanupTestPersons">Limpieza de pruebas</button>
+        </div>
+        <div id="personsCountSummary">Sin resultados todavia.</div>
+        <div id="personsPagination" class="pagination-controls"></div>
+        <div id="personsList"></div>
+      </div>
+
+      <div id="attendanceTab" class="tab-content">
+        <div class="grid">
+          <div class="field">
+            <label for="recordsAttendancePin">PIN</label>
+            <input id="recordsAttendancePin" type="text" placeholder="Todos" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="recordsAttendanceFrom">Desde</label>
+            <input id="recordsAttendanceFrom" type="date" />
+          </div>
+          <div class="field">
+            <label for="recordsAttendanceTo">Hasta</label>
+            <input id="recordsAttendanceTo" type="date" />
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-secondary" id="loadAttendance">Cargar Asistencias</button>
+        </div>
+        <div id="attendanceCountSummary">Sin resultados todavia.</div>
+        <div id="attendancePagination" class="pagination-controls"></div>
+        <div id="attendanceRecordsList"></div>
+      </div>
+
+      <div id="devicesTab" class="tab-content">
+        <div class="actions">
+          <button class="btn-secondary" id="loadDevices">Cargar Dispositivos</button>
+        </div>
+        <div id="devicesCountSummary">Sin resultados todavia.</div>
+        <div id="devicesPagination" class="pagination-controls"></div>
+        <div id="devicesList"></div>
+      </div>
+
+      <div id="commandsTab" class="tab-content" data-advanced-tab="true">
+        <div class="grid">
+          <div class="field">
+            <label for="commandsPin">PIN</label>
+            <input id="commandsPin" type="text" placeholder="Todos" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="commandsType">Tipo</label>
+            <select id="commandsType">
+              <option value="">Todos</option>
+              <option value="USERINFO">USERINFO</option>
+              <option value="BIOPHOTO">BIOPHOTO</option>
+              <option value="BIODATA">BIODATA</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="commandsStatus">Estado</label>
+            <select id="commandsStatus">
+              <option value="">Todos</option>
+              <option value="pending">Pendiente</option>
+              <option value="success">Exitoso</option>
+              <option value="failed">Fallido</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-secondary" id="loadCommands">Cargar Comandos</button>
+        </div>
+        <div id="commandsCountSummary">Sin resultados todavia.</div>
+        <div id="commandsPagination" class="pagination-controls"></div>
+        <div id="commandsList"></div>
+      </div>
+
+      <div id="pendingTab" class="tab-content" data-advanced-tab="true">
+        <div class="actions">
+          <button class="btn-secondary" id="loadPending">Cargar Pendientes</button>
+        </div>
+        <div id="pendingList"></div>
+      </div>
+
+      <div id="biodataTab" class="tab-content" data-advanced-tab="true">
+        <div class="actions">
+          <button class="btn-secondary" id="loadBiodata">Cargar BIODATA</button>
+        </div>
+        <div id="biodataCountSummary">Sin resultados todavia.</div>
+        <div id="biodataPagination" class="pagination-controls"></div>
+        <div id="biodataList"></div>
+      </div>
+
+      <div id="photosTab" class="tab-content" data-advanced-tab="true">
+        <div class="actions">
+          <button class="btn-secondary" id="loadPhotos">Cargar Fotos</button>
+        </div>
+        <div id="photosCountSummary">Sin resultados todavia.</div>
+        <div id="photosPagination" class="pagination-controls"></div>
+        <div id="photosList"></div>
+      </div>
+
+      <div id="auditTab" class="tab-content" data-advanced-tab="true">
+        <div class="grid">
+          <div class="field">
+            <label for="auditPinFilter">PIN</label>
+            <input id="auditPinFilter" type="text" placeholder="PIN o vacio para todos" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="auditScopeFilter">Alcance</label>
+            <select id="auditScopeFilter">
+              <option value="all">Todos</option>
+              <option value="local">Solo local</option>
+              <option value="local+device">Local + dispositivo</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="auditRemoteStatusFilter">Estado remoto</label>
+            <select id="auditRemoteStatusFilter">
+              <option value="all">Todos</option>
+              <option value="solo-local">Solo local</option>
+              <option value="accepted">accepted</option>
+              <option value="failed">failed</option>
+              <option value="queued">queued</option>
+              <option value="sent_waiting_ack">sent_waiting_ack</option>
+              <option value="no-remote">sin estado remoto</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="auditOverallStatusFilter">Estado general</label>
+            <select id="auditOverallStatusFilter">
+              <option value="all">Todos</option>
+              <option value="Borrado local y fisico confirmado">Borrado local y fisico confirmado</option>
+              <option value="completed_local">completed_local</option>
+              <option value="pending_device_confirmation">pending_device_confirmation</option>
+              <option value="failed">failed</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="auditReasonFilter">Motivo</label>
+            <input id="auditReasonFilter" type="text" placeholder="Buscar en motivo o reason" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="auditOnlyWithDevice">Opciones</label>
+            <div><input id="auditOnlyWithDevice" type="checkbox" /> Mostrar solo borrados con dispositivo</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-secondary" id="loadAudit">Cargar Auditoria</button>
+        </div>
+        <div id="auditCountSummary">Sin resultados todavia.</div>
+        <div id="auditPagination" class="pagination-controls"></div>
+        <div id="auditList"></div>
+      </div>
+
+      <div id="configTab" class="tab-content" data-advanced-tab="true">
+        <div class="actions">
+          <button class="btn-secondary" id="loadConfigAdms">Cargar Configuracion ADMS</button>
+          <button class="btn-secondary" id="createSiteButton">Crear sede</button>
+        </div>
+        <div class="subsection-grid">
+          <section class="subsection-card">
+            <h3>Diagnostico ADMS</h3>
+            <div id="admsDiagnosticSummary">Sin resultados todavia.</div>
+            <div class="actions">
+              <button class="btn-secondary" id="loadAdmsDiagnosticPending">Cargar pendientes ADMS</button>
+            </div>
+          </section>
+          <section class="subsection-card">
+            <h3>Sedes</h3>
+            <div id="configSitesList" class="list-stack">Sin resultados todavia.</div>
+          </section>
+          <section class="subsection-card">
+            <h3>Dispositivos</h3>
+            <div id="configDevicesList" class="list-stack">Sin resultados todavia.</div>
+          </section>
+        </div>
+      </div>
+    </section>
+      </div>
+
+    <section id="technicalSection" class="card section-card">
+      <div class="details-card">
+        <div class="details-card-shell">
+          <div>
+            <h2 class="section-title">Detalles tecnicos</h2>
+            <div class="muted">Respuestas completas para diagnostico. Esta seccion es solo visual y no altera el flujo ADMS.</div>
+          </div>
+          <button type="button" class="btn-secondary" id="toggleTechnicalDetails" aria-expanded="false">Mostrar detalles tecnicos</button>
+        </div>
+        <div id="technicalDetailsContent" class="details-card-body hidden">
+          <div class="json-grid">
+            <div class="json-card">
+              <h3>JSON de enrolamiento</h3>
+              <pre id="enrollJsonOutput">Sin resultados todavia.</pre>
+            </div>
+            <div class="json-card">
+              <h3>JSON de command-status</h3>
+              <pre id="commandStatusOutput">Sin resultados todavia.</pre>
+            </div>
+            <div class="json-card">
+              <h3>JSON de asistencia</h3>
+              <pre id="attendanceOutput">Sin resultados todavia.</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    </section>
+  </main>
+
+  <script>
+    const DEFAULT_BASE_URL = 'http://localhost:3000';
+    const FIXED_IMAGE_MODE = 'known-working-upload-profile';
+    const FIXED_PROFILE_PIN = '3';
+    const FIXED_CONTENT_TERMINATOR = 'none';
+    const POLL_INTERVAL_MS = 5000;
+    const POLL_MAX_ATTEMPTS = 24;
+
+    const pageBody = document.body;
+    const appContainer = document.querySelector('main.container');
+    const baseUrlInput = document.getElementById('baseUrl');
+    const appHeaderSite = document.getElementById('appHeaderSite');
+    const appHeaderServer = document.getElementById('appHeaderServer');
+    const appHeaderDevice = document.getElementById('appHeaderDevice');
+    const operatorAdvancedToggle = document.getElementById('operatorAdvancedToggle');
+    const registerSection = document.getElementById('registerSection');
+    const attendanceSection = document.getElementById('attendanceSection');
+    const destinationSection = document.getElementById('destinationSection');
+    const trackingSection = document.getElementById('trackingSection');
+    const serverSection = document.getElementById('serverSection');
+    const technicalSection = document.getElementById('technicalSection');
+    const recordsSection = document.getElementById('recordsSection');
+    const endpointSummaryItem = document.getElementById('endpointSummaryItem');
+    const modeSummaryItem = document.getElementById('modeSummaryItem');
+    const attendanceSnapshotItem = document.getElementById('attendanceSnapshotItem');
+    const estadoServidor = document.getElementById('estadoServidor');
+    const checkHealthButton = document.getElementById('checkHealth');
+    const targetDeviceSelect = document.getElementById('targetDeviceSelect');
+    const selectedSiteValue = document.getElementById('selectedSiteValue');
+    const siteHostnameValue = document.getElementById('siteHostnameValue');
+    const siteModeValue = document.getElementById('siteModeValue');
+    const selectedDeviceValue = document.getElementById('selectedDeviceValue');
+    const selectedDeviceSnValue = document.getElementById('selectedDeviceSnValue');
+    const selectedDeviceStatusValue = document.getElementById('selectedDeviceStatusValue');
+    const selectedDeviceLastSeenValue = document.getElementById('selectedDeviceLastSeenValue');
+    const selectedDeviceLocationValue = document.getElementById('selectedDeviceLocationValue');
+    const targetDeviceHint = document.getElementById('targetDeviceHint');
+    const registerModeInput = document.getElementById('registerMode');
+    const modeHint = document.getElementById('modeHint');
+    const sourceFacePinField = document.getElementById('sourceFacePinField');
+    const sourceFacePinInput = document.getElementById('sourceFacePin');
+    const pinInput = document.getElementById('pin');
+    const nameInput = document.getElementById('name');
+    const passwordInput = document.getElementById('password');
+    const imageFileInput = document.getElementById('imageFile');
+    const imagePreview = document.getElementById('imagePreview');
+    const registerButton = document.getElementById('registerPerson');
+    const checkCommandsButton = document.getElementById('checkCommands');
+    const estadoRegistro = document.getElementById('estadoRegistro');
+    const estadoCommandStatus = document.getElementById('estadoCommandStatus');
+    const estadoAsistencia = document.getElementById('estadoAsistencia');
+    const estadoDispositivo = document.getElementById('estadoDispositivo');
+    const endpointUsado = document.getElementById('endpointUsado');
+    const modoUsado = document.getElementById('modoUsado');
+    const userCommandIdValue = document.getElementById('userCommandIdValue');
+    const biophotoCommandIdValue = document.getElementById('biophotoCommandIdValue');
+    const biodataSummaryItem = document.getElementById('biodataSummaryItem');
+    const biodataCommandIdValue = document.getElementById('biodataCommandIdValue');
+    const attendancePinInput = document.getElementById('attendancePin');
+    const attendanceFromInput = document.getElementById('attendanceFrom');
+    const attendanceToInput = document.getElementById('attendanceTo');
+    const attendanceSnapshotValue = document.getElementById('attendanceSnapshotValue');
+    const fetchAttendanceButton = document.getElementById('fetchAttendance');
+    const toggleTechnicalDetailsButton = document.getElementById('toggleTechnicalDetails');
+    const technicalDetailsContent = document.getElementById('technicalDetailsContent');
+    const enrollJsonOutput = document.getElementById('enrollJsonOutput');
+    const commandStatusOutput = document.getElementById('commandStatusOutput');
+    const attendanceOutput = document.getElementById('attendanceOutput');
+    const configSitesList = document.getElementById('configSitesList');
+    const configDevicesList = document.getElementById('configDevicesList');
+    const createSiteButton = document.getElementById('createSiteButton');
+    const admsDiagnosticSummary = document.getElementById('admsDiagnosticSummary');
+    const loadAdmsDiagnosticPendingButton = document.getElementById('loadAdmsDiagnosticPending');
+    const recordsScopeMode = document.getElementById('recordsScopeMode');
+    const recordsScopeSummary = document.getElementById('recordsScopeSummary');
+    const recordsScopeMessage = document.getElementById('recordsScopeMessage');
+    const personsStatusFilter = document.getElementById('personsStatusFilter');
+    const personsTypeFilter = document.getElementById('personsTypeFilter');
+    const personsSearchInput = document.getElementById('personsSearchInput');
+    const hideDeletedPersons = document.getElementById('hideDeletedPersons');
+    const cleanupTestPersonsButton = document.getElementById('cleanupTestPersons');
+    const personsCountSummary = document.getElementById('personsCountSummary');
+    const personsPagination = document.getElementById('personsPagination');
+    const attendanceCountSummary = document.getElementById('attendanceCountSummary');
+    const attendancePagination = document.getElementById('attendancePagination');
+    const devicesCountSummary = document.getElementById('devicesCountSummary');
+    const devicesPagination = document.getElementById('devicesPagination');
+    const commandsCountSummary = document.getElementById('commandsCountSummary');
+    const commandsPagination = document.getElementById('commandsPagination');
+    const pendingList = document.getElementById('pendingList');
+    const biodataCountSummary = document.getElementById('biodataCountSummary');
+    const biodataPagination = document.getElementById('biodataPagination');
+    const photosCountSummary = document.getElementById('photosCountSummary');
+    const photosPagination = document.getElementById('photosPagination');
+    const auditPinFilter = document.getElementById('auditPinFilter');
+    const auditScopeFilter = document.getElementById('auditScopeFilter');
+    const auditRemoteStatusFilter = document.getElementById('auditRemoteStatusFilter');
+    const auditOverallStatusFilter = document.getElementById('auditOverallStatusFilter');
+    const auditReasonFilter = document.getElementById('auditReasonFilter');
+    const auditOnlyWithDevice = document.getElementById('auditOnlyWithDevice');
+    const auditCountSummary = document.getElementById('auditCountSummary');
+    const auditPagination = document.getElementById('auditPagination');
+
+    const state = {
+      lastMode: 'simple',
+      lastEndpoint: '/adms/enroll-person-with-template',
+      lastEnrollResponse: null,
+      currentEnrollCycle: null,
+      lastCommandStatus: null,
+      lastSyncStatus: null,
+      lastAttendance: null,
+      lastAttendanceRecords: [],
+      lastCommandsRecords: [],
+      lastBiodataRecords: [],
+      lastPhotosRecords: [],
+      lastDevicesRecords: [],
+      lastAuditRecords: [],
+      lastDevices: null,
+      lastPersons: [],
+      pendingSummary: null,
+      sites: [],
+      siteContext: null,
+      operatorAdvanced: false,
+      lastHealthPayload: null,
+      lastHealthError: '',
+      recordsScopeMode: 'device',
+      selectedSiteId: '',
+      selectedDeviceSn: '',
+      selectedDevice: null,
+      lastPersonsMeta: null,
+      lastPin: '',
+      enrollmentStartedAt: '',
+      pagination: {
+        persons: { page: 1, pageSize: 25 },
+        attendance: { page: 1, pageSize: 25 },
+        commands: { page: 1, pageSize: 25 },
+        audit: { page: 1, pageSize: 25 },
+        photos: { page: 1, pageSize: 25 },
+        biodata: { page: 1, pageSize: 25 },
+        devices: { page: 1, pageSize: 25 }
+      },
+      pollSequence: 0,
+      commandStatusRequestSeq: 0
+    };
+
+    function getBaseUrl() {
+      const value = baseUrlInput.value.trim();
+      if (value) {
+        return value;
+      }
+      return window.location.protocol === 'file:' ? DEFAULT_BASE_URL : window.location.origin;
+    }
+
+    function buildNoCacheUrl(url) {
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}t=${Date.now()}`;
+    }
+
+    function getSiteIdFromUrl() {
+      return String(new URLSearchParams(window.location.search).get('siteId') || '').trim();
+    }
+
+    function isAlmacenOperatorPanel() {
+      const siteId = String(state.siteContext?.siteId || '').trim().toLowerCase();
+      const siteHostname = String(state.siteContext?.hostname || '').trim().toLowerCase();
+      const locationHostname = String(window.location.hostname || '').trim().toLowerCase();
+      return siteId === 'almacen' || siteHostname === 'almacen.local' || locationHostname === 'almacen.local';
+    }
+
+    function shouldShowOperatorAdvanced() {
+      return !isAlmacenOperatorPanel() || state.operatorAdvanced;
+    }
+
+    function renderServerStatusValue() {
+      if (state.lastHealthError) {
+        estadoServidor.textContent = `Error: ${state.lastHealthError}`;
+        return;
+      }
+
+      if (!state.lastHealthPayload) {
+        estadoServidor.textContent = 'Sin resultados todavia.';
+        return;
+      }
+
+      if (isAlmacenOperatorPanel() && !state.operatorAdvanced) {
+        estadoServidor.textContent = 'Activo';
+        return;
+      }
+
+      estadoServidor.textContent = JSON.stringify(state.lastHealthPayload, null, 2);
+    }
+
+    function hasOperatorTrackingContent() {
+      const statusText = String(estadoRegistro?.textContent || '').trim();
+      const commandStatusText = String(estadoCommandStatus?.textContent || '').trim();
+      const userCommandId = String(userCommandIdValue?.textContent || '').trim();
+      const biophotoCommandId = String(biophotoCommandIdValue?.textContent || '').trim();
+      const biodataCommandId = String(biodataCommandIdValue?.textContent || '').trim();
+      const currentCycle = state.currentEnrollCycle || {};
+
+      const hasCommandIds = [userCommandId, biophotoCommandId, biodataCommandId]
+        .some(value => value && value !== 'Sin resultados todavia.' && value !== 'No enviada en modo real seguro');
+      const hasCycleIds = Boolean(currentCycle.userCommandId || currentCycle.biophotoCommandId || currentCycle.biodataCommandId);
+      const hasStatus = statusText && statusText !== 'Sin resultados todavia.';
+      const hasCommandStatus = commandStatusText && commandStatusText !== 'Sin resultados todavia.';
+
+      return hasCommandIds || hasCycleIds || hasStatus || hasCommandStatus;
+    }
+
+    function applyAlmacenOperatorUi() {
+      const isAlmacen = isAlmacenOperatorPanel();
+      const showAdvanced = shouldShowOperatorAdvanced();
+      const showTracking = !isAlmacen || showAdvanced || hasOperatorTrackingContent();
+
+      pageBody.classList.toggle('almacen-operator-layout', isAlmacen);
+      appContainer.classList.toggle('almacen-operator-layout', isAlmacen);
+
+      operatorAdvancedToggle.classList.toggle('hidden', !isAlmacen);
+      operatorAdvancedToggle.textContent = showAdvanced ? 'Ocultar herramientas avanzadas' : 'Mostrar herramientas avanzadas';
+
+      registerModeInput.disabled = isAlmacen && !showAdvanced;
+      if (isAlmacen && !showAdvanced) {
+        registerModeInput.value = 'simple';
+      }
+
+      const technicalModeOption = registerModeInput.querySelector('option[value="completo_con_biodata"]');
+      if (technicalModeOption) {
+        technicalModeOption.hidden = isAlmacen && !showAdvanced;
+        technicalModeOption.disabled = isAlmacen && !showAdvanced;
+      }
+
+      checkCommandsButton.classList.toggle('hidden', isAlmacen && !showAdvanced);
+      endpointSummaryItem.classList.toggle('hidden', isAlmacen && !showAdvanced);
+      modeSummaryItem.classList.toggle('hidden', isAlmacen && !showAdvanced);
+      attendanceSnapshotItem.classList.toggle('hidden', isAlmacen && !showAdvanced);
+      attendanceSection.classList.toggle('hidden', isAlmacen && !showAdvanced);
+      destinationSection.classList.toggle('hidden', isAlmacen && !showAdvanced);
+      serverSection.classList.toggle('hidden', isAlmacen && !showAdvanced);
+      trackingSection.classList.toggle('hidden', !showTracking);
+      technicalSection.classList.toggle('hidden', isAlmacen && !showAdvanced);
+
+      document.querySelectorAll('[data-advanced-tab="true"]').forEach(element => {
+        element.classList.toggle('hidden', isAlmacen && !showAdvanced);
+      });
+
+      if (isAlmacen && !showAdvanced) {
+        const activeTab = getActiveRecordsTabName();
+        const hiddenTabs = new Set(['overview', 'commands', 'pending', 'biodata', 'photos', 'audit', 'config']);
+        if (hiddenTabs.has(activeTab)) {
+          switchTab('persons');
+        }
+      }
+
+      renderModeUI();
+      renderServerStatusValue();
+      syncTechnicalDetailsToggle();
+    }
+
+    function getRecordsScopeMode() {
+      return state.recordsScopeMode === 'all' ? 'all' : 'device';
+    }
+
+    function hasActiveRecordsDevice() {
+      return Boolean(getSelectedDeviceTargetInfo().targetDeviceSn);
+    }
+
+    function shouldBlockScopedRecordsView() {
+      return getRecordsScopeMode() === 'device' && !hasActiveRecordsDevice();
+    }
+
+    function getRecordsScopeQuery() {
+      if (getRecordsScopeMode() === 'all') {
+        return { blocked: false, query: 'scope=all' };
+      }
+
+      const targetInfo = getSelectedDeviceTargetInfo();
+      if (!targetInfo.targetDeviceSn) {
+        return { blocked: true, query: '' };
+      }
+
+      const params = new URLSearchParams();
+      if (targetInfo.siteId) {
+        params.set('siteId', targetInfo.siteId);
+      }
+      params.set('targetDeviceSn', targetInfo.targetDeviceSn);
+      params.set('sn', targetInfo.targetDeviceSn);
+      return { blocked: false, query: params.toString() };
+    }
+
+    function buildScopedRecordsUrl(pathname, options = {}) {
+      const url = new URL(`${getBaseUrl()}${pathname}`);
+      const extraParams = options.extraParams || {};
+      const scopeQuery = getRecordsScopeQuery();
+
+      if (!scopeQuery.blocked && scopeQuery.query) {
+        new URLSearchParams(scopeQuery.query).forEach((value, key) => {
+          if (key === 'targetDeviceSn' && options.includeTargetDeviceSn === false) {
+            return;
+          }
+          if (key === 'sn' && options.includeSn !== true) {
+            return;
+          }
+          url.searchParams.set(key, value);
+        });
+      }
+
+      Object.entries(extraParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          url.searchParams.set(key, value);
+        }
+      });
+
+      return url.toString();
+    }
+
+    function clearRecordsOverview() {
+      document.getElementById('totalPersonas').textContent = '0';
+      document.getElementById('totalAsistencias').textContent = '0';
+      document.getElementById('totalDispositivos').textContent = '0';
+      document.getElementById('totalComandos').textContent = '0';
+      document.getElementById('totalPendientes').textContent = '0';
+      document.getElementById('totalBiodata').textContent = '0';
+      document.getElementById('totalFotos').textContent = '0';
+    }
+
+    function renderBlockedRecordsState(containerId, summaryElement, summaryText, emptyText) {
+      const container = document.getElementById(containerId);
+      if (summaryElement) {
+        summaryElement.textContent = summaryText;
+      }
+      if (container) {
+        container.innerHTML = `<p>${emptyText}</p>`;
+      }
+    }
+
+    function getRecordsScopeSummaryText() {
+      if (getRecordsScopeMode() === 'all') {
+        return 'Todos los dispositivos / Todas las sedes';
+      }
+
+      const targetInfo = getSelectedDeviceTargetInfo();
+      const siteName = state.siteContext?.siteName || targetInfo.siteId || 'Sin sede';
+      if (!targetInfo.targetDeviceSn) {
+        return `Sin dispositivo activo / ${siteName}`;
+      }
+      return `${targetInfo.deviceName || 'Dispositivo activo'} / ${targetInfo.targetDeviceSn} / ${siteName}`;
+    }
+
+    function updateRecordsScopeUi() {
+      if (recordsScopeMode) {
+        recordsScopeMode.value = getRecordsScopeMode();
+      }
+      if (recordsScopeSummary) {
+        recordsScopeSummary.textContent = getRecordsScopeSummaryText();
+      }
+      if (recordsScopeMessage) {
+        recordsScopeMessage.textContent = shouldBlockScopedRecordsView()
+          ? 'No hay dispositivo activo para filtrar registros.'
+          : getRecordsScopeMode() === 'all'
+            ? 'Mostrando datos globales del servidor.'
+            : 'Mostrando solo datos del dispositivo y sede activos.';
+      }
+    }
+
+    function getActiveRecordsTabName() {
+      const activeButton = document.querySelector('.tab-button.active');
+      return activeButton ? String(activeButton.dataset.tab || 'overview') : 'overview';
+    }
+
+    function reloadActiveRecordsTab() {
+      const activeTab = getActiveRecordsTabName();
+      const loaders = {
+        overview: loadOverview,
+        persons: loadPersons,
+        attendance: loadAttendanceRecords,
+        devices: loadDevices,
+        commands: loadCommands,
+        pending: loadPending,
+        biodata: loadBiodata,
+        photos: loadPhotos,
+        audit: loadAudit
+      };
+
+      const loader = loaders[activeTab];
+      if (typeof loader === 'function') {
+        loader().catch(error => console.warn(`No fue posible recargar la pestaña ${activeTab}:`, error));
+      }
+    }
+
+    function setText(element, value) {
+      element.textContent = value || 'Sin resultados todavia.';
+      syncDashboardChrome();
+    }
+
+    function setJsonOutput(element, value) {
+      element.textContent = value ? JSON.stringify(value, null, 2) : 'Sin resultados todavia.';
+    }
+
+    function applyStatusPill(element, text, variant) {
+      if (!element) return;
+      element.textContent = text;
+      element.className = 'status-pill';
+      if (variant) {
+        element.classList.add(variant);
+      }
+    }
+
+    function syncDashboardChrome() {
+      if (attendanceSnapshotValue) {
+        attendanceSnapshotValue.textContent = estadoAsistencia?.textContent || 'Sin resultados todavia.';
+      }
+
+      const siteText = selectedSiteValue?.textContent || state.siteContext?.siteName || 'Sin contexto';
+      applyStatusPill(appHeaderSite, `Sede: ${siteText}`, siteText.includes('Sin') ? 'status-pill-warning' : 'status-pill-ok');
+
+      const serverText = String(estadoServidor?.textContent || '').trim();
+      const serverVariant = !serverText || serverText.startsWith('Sin')
+        ? 'status-pill-warning'
+        : serverText.startsWith('Error')
+          ? 'status-pill-error'
+          : 'status-pill-ok';
+      const serverLabel = serverVariant === 'status-pill-ok' ? 'Servidor: activo' : serverVariant === 'status-pill-error' ? 'Servidor: error' : 'Servidor: sin verificar';
+      applyStatusPill(appHeaderServer, serverLabel, serverVariant);
+
+      const deviceText = selectedDeviceValue?.textContent || 'Sin dispositivo';
+      const deviceState = String(selectedDeviceStatusValue?.textContent || '').toLowerCase();
+      const deviceVariant = deviceText.includes('Sin dispositivo')
+        ? 'status-pill-warning'
+        : deviceState.includes('online')
+          ? 'status-pill-ok'
+          : deviceState.includes('offline')
+            ? 'status-pill-error'
+            : 'status-pill-warning';
+      const deviceLabel = deviceText.includes('Sin dispositivo')
+        ? 'Destino: sin dispositivo'
+        : `Destino: ${deviceText} - ${selectedDeviceStatusValue?.textContent || 'desconocido'}`;
+      applyStatusPill(appHeaderDevice, deviceLabel, deviceVariant);
+    }
+
+    function syncTechnicalDetailsToggle() {
+      const isOpen = technicalDetailsContent && !technicalDetailsContent.classList.contains('hidden');
+      if (toggleTechnicalDetailsButton) {
+        toggleTechnicalDetailsButton.textContent = isOpen ? 'Ocultar detalles tecnicos' : 'Mostrar detalles tecnicos';
+        toggleTechnicalDetailsButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      }
+    }
+
+    function toggleTechnicalDetails() {
+      if (!technicalDetailsContent) return;
+      technicalDetailsContent.classList.toggle('hidden');
+      syncTechnicalDetailsToggle();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getStatusBadgeClass(value) {
+      const normalized = String(value || '').toLowerCase();
+      if (['ok', 'online', 'enabled', 'accepted', 'success', 'activo', 'active'].includes(normalized)) {
+        return 'badge badge-ok';
+      }
+      if (['failed', 'error', 'offline', 'eliminado', 'deleted'].includes(normalized)) {
+        return 'badge badge-error';
+      }
+      if (['pending', 'queued', 'sent_waiting_ack', 'pendiente'].includes(normalized)) {
+        return 'badge badge-warning';
+      }
+      return 'badge badge-neutral';
+    }
+
+    function renderBooleanBadge(label, enabled) {
+      return `<span class="${enabled ? 'badge badge-ok' : 'badge badge-neutral'}">${label}: ${enabled ? 'Si' : 'No'}</span>`;
+    }
+
+    const paginationRenderers = {
+      persons: () => renderPersonsList(state.lastPersons),
+      attendance: () => renderAttendanceRecordsList(state.lastAttendanceRecords),
+      commands: () => renderCommandsList(state.lastCommandsRecords),
+      audit: () => renderAuditList(state.lastAuditRecords),
+      photos: () => renderPhotosList(state.lastPhotosRecords),
+      biodata: () => renderBiodataList(state.lastBiodataRecords),
+      devices: () => renderDevicesRecordsList(state.lastDevicesRecords)
+    };
+
+    function getPaginationState(key) {
+      const fallback = { page: 1, pageSize: 25 };
+      if (!state.pagination[key]) {
+        state.pagination[key] = { ...fallback };
+      }
+      return state.pagination[key];
+    }
+
+    function setPaginationState(key, patch) {
+      const current = getPaginationState(key);
+      state.pagination[key] = {
+        ...current,
+        ...patch
+      };
+      return state.pagination[key];
+    }
+
+    function resetPagination(key) {
+      setPaginationState(key, { page: 1 });
+    }
+
+    function paginateList(key, records) {
+      const items = Array.isArray(records) ? records : [];
+      const pagination = getPaginationState(key);
+      const pageSize = Number(pagination.pageSize) || 25;
+      const total = items.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const page = Math.min(Math.max(Number(pagination.page) || 1, 1), totalPages);
+      if (page !== pagination.page) {
+        setPaginationState(key, { page });
+      }
+      const startIndex = total === 0 ? 0 : (page - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, total);
+      return {
+        items: items.slice(startIndex, endIndex),
+        total,
+        page,
+        pageSize,
+        totalPages,
+        start: total === 0 ? 0 : startIndex + 1,
+        end: endIndex
+      };
+    }
+
+    function renderPaginationControls(key, total, containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      if (total === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const { page, pageSize, totalPages, start, end } = paginateList(key, new Array(total));
+      container.innerHTML = `
+        <div class="pagination-meta">Mostrando ${start}-${end} de ${total}</div>
+        <div class="pagination-actions">
+          <button type="button" class="btn-secondary" data-page-action="prev" ${page <= 1 ? 'disabled' : ''}>Anterior</button>
+          <span class="muted">Pagina ${page} de ${totalPages}</span>
+          <button type="button" class="btn-secondary" data-page-action="next" ${page >= totalPages ? 'disabled' : ''}>Siguiente</button>
+          <label class="muted" for="${containerId}Size">Tamano</label>
+          <select id="${containerId}Size" data-page-size>
+            <option value="10" ${pageSize === 10 ? 'selected' : ''}>10</option>
+            <option value="25" ${pageSize === 25 ? 'selected' : ''}>25</option>
+            <option value="50" ${pageSize === 50 ? 'selected' : ''}>50</option>
+            <option value="100" ${pageSize === 100 ? 'selected' : ''}>100</option>
+          </select>
+        </div>
+      `;
+
+      const rerender = paginationRenderers[key];
+      container.querySelector('[data-page-action="prev"]')?.addEventListener('click', () => {
+        setPaginationState(key, { page: Math.max(1, getPaginationState(key).page - 1) });
+        if (rerender) rerender();
+      });
+      container.querySelector('[data-page-action="next"]')?.addEventListener('click', () => {
+        setPaginationState(key, { page: Math.min(totalPages, getPaginationState(key).page + 1) });
+        if (rerender) rerender();
+      });
+      container.querySelector('[data-page-size]')?.addEventListener('change', event => {
+        setPaginationState(key, { page: 1, pageSize: Number(event.target.value) || 25 });
+        if (rerender) rerender();
+      });
+    }
+
+    const TEST_PERSON_EXCLUDED_PINS = new Set(['1', '3', '4', '12', '13', '14', '30', '32']);
+
+    function getPersonStatus(person) {
+      return String(person?.status || person?.estado || '').trim().toLowerCase();
+    }
+
+    function isDeletedPerson(person) {
+      return getPersonStatus(person) === 'eliminado';
+    }
+
+    function isTestUserCandidate(person) {
+      const pin = String(person?.pin || '').trim();
+      const name = String(person?.name || '').trim().toLowerCase();
+      return name.includes('prueba')
+        || name.includes('test')
+        || name.includes('tmp')
+        || name.includes('seq')
+        || pin.startsWith('9')
+        || pin.startsWith('555');
+    }
+
+    function applyPersonFilters(persons) {
+      const statusFilter = String(personsStatusFilter?.value || 'all').trim();
+      const typeFilter = String(personsTypeFilter?.value || 'all').trim();
+      const search = String(personsSearchInput?.value || '').trim().toLowerCase();
+      const hideDeleted = Boolean(hideDeletedPersons?.checked);
+
+      return (Array.isArray(persons) ? persons : []).filter(person => {
+        const pin = String(person?.pin || '').trim();
+        const name = String(person?.name || '').trim().toLowerCase();
+        const status = getPersonStatus(person);
+
+        if (hideDeleted && status === 'eliminado') return false;
+        if (statusFilter !== 'all' && status !== statusFilter) return false;
+        if (search && !pin.toLowerCase().includes(search) && !name.includes(search)) return false;
+
+        if (typeFilter === 'with-photo' && !person?.hasPhoto) return false;
+        if (typeFilter === 'without-photo' && person?.hasPhoto) return false;
+        if (typeFilter === 'with-attendance' && !person?.hasAttendance) return false;
+        if (typeFilter === 'without-attendance' && person?.hasAttendance) return false;
+        if (typeFilter === 'with-biodata' && !person?.hasBiodata) return false;
+        if (typeFilter === 'without-biodata' && person?.hasBiodata) return false;
+        if (typeFilter === 'test-users' && !isTestUserCandidate(person)) return false;
+
+        return true;
+      });
+    }
+
+    function renderPersonsList(persons) {
+      const container = document.getElementById('personsList');
+      const allPersons = Array.isArray(persons) ? persons : [];
+      const filteredPersons = applyPersonFilters(allPersons);
+      const pageData = paginateList('persons', filteredPersons);
+      const personsScopeMessage = String(state.lastPersonsMeta?.message || '').trim();
+
+      personsCountSummary.textContent = `Mostrando ${pageData.start}-${pageData.end} de ${filteredPersons.length} personas.`;
+      container.innerHTML = '';
+      renderPaginationControls('persons', filteredPersons.length, 'personsPagination');
+
+      if (allPersons.length === 0) {
+        personsCountSummary.textContent = 'Mostrando 0 de 0 personas.';
+        container.innerHTML = `<p>${personsScopeMessage || 'No hay resultados para mostrar.'}</p>`;
+        return;
+      }
+
+      if (filteredPersons.length === 0) {
+        personsCountSummary.textContent = 'Mostrando 0 de 0 personas.';
+        container.innerHTML = `<p>${personsScopeMessage || 'No hay resultados para mostrar.'}</p>`;
+        return;
+      }
+
+      if (personsScopeMessage) {
+        const info = document.createElement('p');
+        info.className = 'muted';
+        info.textContent = personsScopeMessage;
+        container.appendChild(info);
+      }
+
+      pageData.items.forEach(person => {
+        const item = document.createElement('div');
+        item.className = 'compact-card';
+        const statusText = person.status || 'N/A';
+        item.innerHTML = `
+          <div class="compact-card-header">
+            <h4 class="compact-card-title">${escapeHtml(person.pin || 'N/A')} - ${escapeHtml(person.name || 'Sin nombre')} - ${escapeHtml(statusText)}</h4>
+            <span class="${getStatusBadgeClass(statusText)}">${escapeHtml(statusText)}</span>
+          </div>
+          <div class="compact-card-line">
+            ${renderBooleanBadge('Foto', !!person.hasPhoto)}
+            ${renderBooleanBadge('Asistencia', !!person.hasAttendance)}
+            ${renderBooleanBadge('BIODATA', !!person.hasBiodata)}
+          </div>
+          <div class="compact-card-line muted">
+            <span>Creado: ${escapeHtml(person.createdAt || 'N/A')}</span>
+            <span>Actualizado: ${escapeHtml(person.updatedAt || 'N/A')}</span>
+          </div>
+          <div class="compact-card-actions">
+            <button class="btn-danger" onclick="prepareDelete('${person.pin}')">Preparar borrado</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function normalizeDevicesResponse(body) {
+      if (Array.isArray(body)) {
+        return body;
+      }
+      if (Array.isArray(body?.devices)) {
+        return body.devices;
+      }
+      if (Array.isArray(body?.value)) {
+        return body.value;
+      }
+      return [];
+    }
+
+    function isEnabledDevice(device) {
+      return device && device.enabled !== false;
+    }
+
+    function getAllowedDeviceSnSet() {
+      if (!state.siteContext || !Array.isArray(state.siteContext.allowedDeviceSns)) {
+        return null;
+      }
+      const allowed = Array.isArray(state.siteContext?.allowedDeviceSns) ? state.siteContext.allowedDeviceSns : [];
+      return new Set(allowed.map(value => String(value || '').trim()).filter(Boolean));
+    }
+
+    function isSelectableDeviceForActiveSite(device) {
+      const allowedSnSet = getAllowedDeviceSnSet();
+      const normalizedSn = String(device?.sn || '').trim();
+      return Boolean(device)
+        && device.enabled === true
+        && device.discoveredOnly !== true
+        && Boolean(allowedSnSet && allowedSnSet.has(normalizedSn));
+    }
+
+    function getDeviceDisplayName(device) {
+      return device?.deviceName || device?.name || 'Dispositivo sin nombre';
+    }
+
+    function formatDeviceOptionLabel(device) {
+      return `${getDeviceDisplayName(device)} - ${device?.sn || '-'} - ${device?.locationName || device?.siteId || 'Sin sede'} - ${device?.estado || 'desconocido'}`;
+    }
+
+    function getSelectedDeviceTargetInfo() {
+      const device = isSelectableDeviceForActiveSite(state.selectedDevice) ? state.selectedDevice : null;
+      return {
+        targetDeviceSn: device ? (state.selectedDeviceSn || String(device.sn || '').trim() || '') : '',
+        siteId: String(state.siteContext?.siteId || state.selectedSiteId || (device?.siteId || '')).trim(),
+        deviceName: device ? getDeviceDisplayName(device) : '',
+        locationName: device ? (String(device.locationName || '').trim() || '') : ''
+      };
+    }
+
+    function getSiteName(siteId) {
+      const site = state.sites.find(s => String(s.siteId || s.id) === String(siteId));
+      return site ? site.name : siteId;
+    }
+
+    function renderSelectedDevice() {
+      const device = state.selectedDevice;
+      if (!device) {
+        setText(selectedSiteValue, state.siteContext?.siteName || 'Sin dispositivo seleccionado.');
+        setText(siteHostnameValue, state.siteContext?.hostname || 'Sin resultados todavia.');
+        setText(siteModeValue, state.siteContext?.matchedBy || 'Sin resultados todavia.');
+        setText(selectedDeviceValue, 'Sin dispositivo habilitado');
+        setText(selectedDeviceSnValue, 'N/A');
+        setText(selectedDeviceStatusValue, 'N/A');
+        setText(selectedDeviceLastSeenValue, 'N/A');
+        setText(selectedDeviceLocationValue, 'N/A');
+        setText(targetDeviceHint, 'Esta sede no tiene dispositivos habilitados. Agrega un SN permitido en Configuracion ADMS.');
+        updateRegisterButtonState();
+        updateRecordsScopeUi();
+        applyAlmacenOperatorUi();
+        return;
+      }
+
+      setText(selectedSiteValue, state.siteContext?.siteName || getSiteName(device.siteId) || 'Sin sede');
+      setText(siteHostnameValue, state.siteContext?.hostname || 'No disponible');
+      setText(siteModeValue, state.siteContext?.matchedBy || 'No disponible');
+      setText(selectedDeviceValue, getDeviceDisplayName(device));
+      setText(selectedDeviceSnValue, device.sn || '-');
+      setText(selectedDeviceStatusValue, device.estado || 'desconocido');
+      setText(selectedDeviceLastSeenValue, device.ultima_conexion || device.lastSeenAt || 'No disponible');
+      setText(selectedDeviceLocationValue, device.locationName || 'No disponible');
+      setText(targetDeviceHint, `Este registro se enviara a:\n${getDeviceDisplayName(device)} / ${device.sn || '-'} / ${device.locationName || 'Sin ubicacion'}`);
+      updateRegisterButtonState();
+      updateRecordsScopeUi();
+      applyAlmacenOperatorUi();
+    }
+
+    function applySelectedDeviceSn(deviceSn) {
+      const devices = Array.isArray(state.lastDevices) ? state.lastDevices : [];
+      const normalizedDeviceSn = String(deviceSn || '').trim();
+      const selectableDevices = devices.filter(isSelectableDeviceForActiveSite);
+      const matchedDevice = selectableDevices.find(device => String(device.sn || '').trim() === normalizedDeviceSn)
+        || selectableDevices[0]
+        || null;
+
+      state.selectedDevice = matchedDevice;
+      state.selectedDeviceSn = matchedDevice ? String(matchedDevice.sn || '').trim() : '';
+      state.selectedSiteId = String(state.siteContext?.siteId || (matchedDevice ? String(matchedDevice.siteId || '').trim() : '')).trim();
+
+      if (targetDeviceSelect) {
+        targetDeviceSelect.value = state.selectedDeviceSn;
+      }
+
+      renderSelectedDevice();
+    }
+
+    function renderTargetDeviceOptions(devices) {
+      const normalizedDevices = Array.isArray(devices) ? devices : [];
+      const selectableDevices = normalizedDevices.filter(isSelectableDeviceForActiveSite);
+
+      targetDeviceSelect.innerHTML = '';
+      if (selectableDevices.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Sin dispositivos habilitados para esta sede';
+        targetDeviceSelect.appendChild(option);
+        state.selectedDevice = null;
+        state.selectedDeviceSn = '';
+        state.selectedSiteId = String(state.siteContext?.siteId || '').trim();
+        renderSelectedDevice();
+        return;
+      }
+
+      normalizedDevices.forEach(device => {
+        const normalizedSn = String(device.sn || '').trim();
+        const option = document.createElement('option');
+        option.value = normalizedSn;
+        option.textContent = formatDeviceOptionLabel(device);
+        option.disabled = !isSelectableDeviceForActiveSite(device);
+        targetDeviceSelect.appendChild(option);
+      });
+
+      if (!state.selectedDeviceSn) {
+        const defaultDevice = selectableDevices[0];
+        applySelectedDeviceSn(defaultDevice ? defaultDevice.sn : '');
+        return;
+      }
+
+      applySelectedDeviceSn(state.selectedDeviceSn);
+    }
+
+    function getCurrentMode() {
+      return registerModeInput.value || 'simple';
+    }
+
+    function getCurrentModeLabel(mode = getCurrentMode()) {
+      return mode === 'completo_con_biodata'
+        ? 'Prueba tecnica con BIODATA copiada'
+        : 'Registro real sin BIODATA copiada';
+    }
+
+    function getCurrentEndpoint() {
+      return getCurrentMode() === 'completo_con_biodata'
+        ? '/adms/enroll-person-with-template'
+        : '/adms/enroll-person';
+    }
+
+    function renderModeUI() {
+      const mode = getCurrentMode();
+      const isFullMode = mode === 'completo_con_biodata';
+      sourceFacePinField.classList.toggle('hidden', !isFullMode);
+      biodataSummaryItem.classList.remove('hidden');
+      modeHint.textContent = isFullMode
+        ? 'Prueba tecnica con BIODATA copiada. No usar para personas reales. Este modo copia la plantilla biometrica desde sourceFacePin. La persona registrada puede quedar con la biometria de otro PIN.'
+        : isAlmacenOperatorPanel()
+          ? 'Despues de enviar, capture la biometria real en el reloj.'
+          : 'Este modo crea el usuario y envia la foto. No envia plantilla biometrica. Capture rostro/huella real directamente en el reloj para este PIN.';
+
+      if (!isFullMode) {
+        sourceFacePinInput.value = '3';
+        setText(biodataCommandIdValue, 'No enviada en modo real seguro');
+      } else if (!sourceFacePinInput.value.trim()) {
+        sourceFacePinInput.value = '3';
+      }
+
+      setText(endpointUsado, getCurrentEndpoint());
+      setText(modoUsado, getCurrentModeLabel(mode));
+    }
+
+    function setPreview(file) {
+      imagePreview.innerHTML = '';
+      if (!file) {
+        imagePreview.textContent = 'Vista previa';
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'Vista previa';
+      img.onload = () => URL.revokeObjectURL(url);
+      imagePreview.appendChild(img);
+    }
+
+    function validateForm() {
+      const missing = [];
+      const mode = getCurrentMode();
+      const requiresImage = mode === 'simple' || mode === 'completo_con_biodata';
+
+      if (!pinInput.value.trim()) missing.push('pin');
+      if (!nameInput.value.trim()) missing.push('name');
+      if (!passwordInput.value.trim()) missing.push('password');
+      if (requiresImage && !imageFileInput.files.length) {
+        setText(estadoRegistro, 'Debe seleccionar una imagen para este modo.');
+        return false;
+      }
+      if (mode === 'completo_con_biodata' && !sourceFacePinInput.value.trim()) missing.push('sourceFacePin');
+      if (!getSelectedDeviceTargetInfo().targetDeviceSn) missing.push('dispositivo permitido para la sede activa');
+
+      if (missing.length > 0) {
+        setText(estadoRegistro, `Faltan campos requeridos: ${missing.join(', ')}`);
+        return false;
+      }
+
+      return true;
+    }
+
+    function getCommandIds() {
+      const cycle = state.currentEnrollCycle;
+      if (!cycle) {
+        return [];
+      }
+
+      const ids = [cycle.userCommandId || '', cycle.biophotoCommandId || ''];
+      if (cycle.biodataCommandId) {
+        ids.push(cycle.biodataCommandId);
+      }
+
+      return ids.filter(Boolean);
+    }
+
+    function getCurrentCycleSummary() {
+      const cycle = state.currentEnrollCycle;
+      if (!cycle) {
+        return {
+          cycle: null,
+          ids: [],
+          isSamePinInForm: false,
+          hasPending: false,
+          allAccepted: false,
+          failed: false
+        };
+      }
+
+      const ids = [cycle.userCommandId, cycle.biophotoCommandId, cycle.biodataCommandId].filter(Boolean).map(String);
+      const statusById = new Map((Array.isArray(state.lastCommandStatus) ? state.lastCommandStatus : []).map(item => [String(item.id || ''), item]));
+      const pendingStatuses = new Set(['pending', 'queued', 'sent_waiting_ack', 'retry_pending']);
+      const isSamePinInForm = String(pinInput.value || '').trim() !== '' && String(pinInput.value || '').trim() === String(cycle.pin || '').trim();
+      const hasPending = ids.length > 0 && ids.some(id => {
+        const current = statusById.get(id);
+        return !current || current.found === false || pendingStatuses.has(String(current.status || ''));
+      });
+      const allAccepted = ids.length > 0 && ids.every(id => {
+        const current = statusById.get(id);
+        return current && current.found === true && String(current.status || '') === 'accepted' && String(current.returnCode || '') === '0';
+      });
+      const failed = ids.some(id => {
+        const current = statusById.get(id);
+        if (!current || current.found !== true) {
+          return false;
+        }
+        if (String(current.status || '') === 'failed') {
+          return true;
+        }
+        return current.returnCode !== undefined && current.returnCode !== null && String(current.returnCode).trim() !== '' && String(current.returnCode) !== '0';
+      });
+
+      return {
+        cycle,
+        ids,
+        isSamePinInForm,
+        hasPending,
+        allAccepted,
+        failed
+      };
+    }
+
+    function updateRegisterButtonState() {
+      const summary = getCurrentCycleSummary();
+      const hasValidTarget = Boolean(getSelectedDeviceTargetInfo().targetDeviceSn);
+      const shouldBlock = (summary.isSamePinInForm && summary.hasPending) || !hasValidTarget;
+      registerButton.disabled = shouldBlock;
+      registerButton.title = shouldBlock
+        ? (hasValidTarget
+          ? 'Hay un registro en curso para este PIN. Espere a que USERINFO, BIOPHOTO y BIODATA sean aceptados antes de registrar otra vez.'
+          : 'Esta sede no tiene dispositivos habilitados. Agrega un SN permitido en Configuracion ADMS.')
+        : '';
+    }
+
+    function getExpectedCommands() {
+      const cycle = state.currentEnrollCycle || {};
+      const commands = [
+        { id: cycle.userCommandId || '', label: 'USERINFO' },
+        { id: cycle.biophotoCommandId || '', label: 'BIOPHOTO' }
+      ];
+
+      if (cycle.biodataCommandId) {
+        commands.push({ id: cycle.biodataCommandId, label: 'BIODATA' });
+      }
+
+      return commands.filter(item => item.id);
+    }
+
+    function setInitialStates() {
+      setText(estadoRegistro, 'Sin resultados todavia.');
+      setText(estadoCommandStatus, 'Sin resultados todavia.');
+      setText(estadoAsistencia, 'Sin resultados todavia.');
+      setText(estadoDispositivo, 'Sin resultados todavia.');
+      setText(userCommandIdValue, '');
+      setText(biophotoCommandIdValue, '');
+      setText(biodataCommandIdValue, 'No enviada en modo real seguro');
+    }
+
+    async function checkHealth() {
+      try {
+        const response = await fetch(`${getBaseUrl()}/health`, { cache: 'no-store' });
+        const body = await response.json();
+
+        if (!response.ok) {
+          throw new Error(body.error || `HTTP ${response.status}`);
+        }
+
+        state.lastHealthPayload = body;
+        state.lastHealthError = '';
+        renderServerStatusValue();
+        syncDashboardChrome();
+      } catch (error) {
+        state.lastHealthPayload = null;
+        state.lastHealthError = error.message;
+        renderServerStatusValue();
+        syncDashboardChrome();
+      }
+    }
+
+    async function fetchSites() {
+      try {
+        const sites = await fetchAdmsConfigSites();
+        state.sites = sites;
+        renderSelectedDevice();
+        renderTargetDeviceOptions(state.lastDevices || []);
+        renderAdmsDiagnostics();
+        return sites;
+      } catch (error) {
+        console.warn('Error fetching sites:', error);
+        state.sites = [];
+        renderSelectedDevice();
+        renderTargetDeviceOptions(state.lastDevices || []);
+        renderAdmsDiagnostics();
+        return [];
+      }
+    }
+
+    async function fetchDevices() {
+      try {
+        const response = await fetch(buildNoCacheUrl(`${getBaseUrl()}/adms/records/devices`), { cache: 'no-store' });
+        const body = await response.json();
+        const devices = normalizeDevicesResponse(body);
+
+        if (!response.ok || (body.ok === false)) {
+          console.warn('Error fetching devices:', body.error || `HTTP ${response.status}`);
+          state.lastDevices = devices;
+          await fetchSites();
+          renderTargetDeviceOptions(devices);
+          renderAdmsDiagnostics();
+          return devices;
+        }
+
+        state.lastDevices = devices;
+        await fetchSites();
+        renderTargetDeviceOptions(devices);
+        renderAdmsDiagnostics();
+        return devices;
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+        state.lastDevices = [];
+        await fetchSites();
+        renderTargetDeviceOptions([]);
+        renderAdmsDiagnostics();
+        return [];
+      }
+    }
+
+    function getPrimaryDevice(devices) {
+      if (!Array.isArray(devices) || devices.length === 0) {
+        return null;
+      }
+
+      if (state.selectedDeviceSn && isSelectableDeviceForActiveSite(state.selectedDevice)) {
+        const selectedDevice = devices.find(device => String(device.sn || '').trim() === String(state.selectedDeviceSn || '').trim());
+        if (isSelectableDeviceForActiveSite(selectedDevice)) {
+          return selectedDevice;
+        }
+      }
+
+      return null;
+    }
+
+    function updateDeviceStatus(devices) {
+      const primaryDevice = getPrimaryDevice(devices);
+
+      if (!primaryDevice) {
+        setText(estadoDispositivo, 'No hay dispositivo habilitado para esta sede.\nAgrega un SN permitido en Configuracion ADMS o cambia de sede.');
+        return { online: false, device: null };
+      }
+
+      const deviceState = String(primaryDevice.estado || '').toLowerCase();
+      const online = deviceState === 'online';
+      const elapsedSeconds = Number.isInteger(primaryDevice.segundos_desde_ultima_conexion)
+        ? primaryDevice.segundos_desde_ultima_conexion
+        : null;
+      const elapsedMinutes = Number.isInteger(primaryDevice.minutos_desde_ultima_conexion)
+        ? primaryDevice.minutos_desde_ultima_conexion
+        : null;
+      const elapsedText = elapsedSeconds == null
+        ? 'Tiempo desde la ultima conexion: no disponible.'
+        : `Tiempo desde la ultima conexion: ${elapsedSeconds}s (${elapsedMinutes ?? 0} min).`;
+
+      setText(
+        estadoDispositivo,
+        deviceState === 'online'
+          ? `Dispositivo online. Se puede enviar el registro.\nSN: ${primaryDevice.sn || primaryDevice.numero_serie || '-'}\nIP: ${primaryDevice.ip || primaryDevice.ultima_ip || '-'}\nUltima conexion: ${primaryDevice.ultima_conexion || '-'}\n${elapsedText}`
+          : deviceState === 'sin_comunicacion_reciente'
+            ? `Dispositivo sin comunicacion reciente. Aun puede reconectar pronto.\nSN: ${primaryDevice.sn || primaryDevice.numero_serie || '-'}\nIP: ${primaryDevice.ip || primaryDevice.ultima_ip || '-'}\nUltima conexion: ${primaryDevice.ultima_conexion || '-'}\n${elapsedText}`
+            : `Dispositivo offline. El registro quedara pendiente y se enviara cuando el reloj vuelva a conectarse.\nSN: ${primaryDevice.sn || primaryDevice.numero_serie || '-'}\nIP: ${primaryDevice.ip || primaryDevice.ultima_ip || '-'}\nUltima conexion: ${primaryDevice.ultima_conexion || '-'}\n${elapsedText}`
+      );
+
+      return { online, deviceState, device: primaryDevice };
+    }
+
+    function toTimeValue(value) {
+      if (!value) {
+        return NaN;
+      }
+
+      const normalized = String(value).includes('T')
+        ? String(value)
+        : String(value).replace(' ', 'T');
+      return Date.parse(normalized);
+    }
+
+    function splitAttendanceByEnrollment(attendance, enrollmentStartedAt) {
+      const startedAtMs = toTimeValue(enrollmentStartedAt);
+      if (!Number.isFinite(startedAtMs)) {
+        return {
+          recent: Array.isArray(attendance) ? attendance : [],
+          old: []
+        };
+      }
+
+      const recent = [];
+      const old = [];
+
+      for (const entry of Array.isArray(attendance) ? attendance : []) {
+        const receivedMs = toTimeValue(entry.recibido_en || entry.receivedAt);
+        const deviceMs = toTimeValue(entry.fecha_hora_dispositivo || entry.timestamp);
+        const isRecent = (Number.isFinite(receivedMs) && receivedMs >= startedAtMs) ||
+          (Number.isFinite(deviceMs) && deviceMs >= startedAtMs);
+
+        if (isRecent) {
+          recent.push(entry);
+        } else {
+          old.push(entry);
+        }
+      }
+
+      return { recent, old };
+    }
+
+    async function fetchCommandStatus(ids, options = {}) {
+      const { updateUi = true, silent = false } = options;
+      const commandIds = ids.filter(Boolean);
+      const requestSeq = ++state.commandStatusRequestSeq;
+
+      if (commandIds.length === 0) {
+        if (requestSeq === state.commandStatusRequestSeq) {
+          state.lastCommandStatus = null;
+        }
+        if (updateUi) {
+          setText(estadoCommandStatus, 'Aun no hay comandos enviados.');
+          setJsonOutput(commandStatusOutput, null);
+          evaluateCompositeState();
+        }
+        return null;
+      }
+
+      try {
+        const response = await fetch(buildNoCacheUrl(`${getBaseUrl()}/adms/command-status?ids=${encodeURIComponent(commandIds.join(','))}`), {
+          cache: 'no-store'
+        });
+        const body = await response.json();
+
+        if (!response.ok) {
+          throw new Error(body.error || `HTTP ${response.status}`);
+        }
+
+        if (requestSeq !== state.commandStatusRequestSeq) {
+          return body;
+        }
+
+        state.lastCommandStatus = body;
+        if (updateUi) {
+          setJsonOutput(commandStatusOutput, body);
+          evaluateCompositeState();
+        }
+
+        return body;
+      } catch (error) {
+        if (requestSeq !== state.commandStatusRequestSeq) {
+          throw error;
+        }
+
+        state.lastCommandStatus = null;
+        if (!silent) {
+          setJsonOutput(commandStatusOutput, {
+            status: 'error',
+            error: error.message
+          });
+          setText(estadoCommandStatus, `Error consultando command-status: ${error.message}`);
+          setText(estadoRegistro, 'error_refresco_command_status');
+        }
+        throw error;
+      }
+    }
+
+    async function fetchSyncStatus(pin, options = {}) {
+      const { silent = false } = options;
+      const normalizedPin = String(pin || '').trim();
+
+      if (!normalizedPin) {
+        state.lastSyncStatus = null;
+        return null;
+      }
+
+      try {
+        const response = await fetch(buildNoCacheUrl(`${getBaseUrl()}/adms/sync/status?pin=${encodeURIComponent(normalizedPin)}`), {
+          cache: 'no-store'
+        });
+        const body = await response.json();
+
+        if (!response.ok) {
+          throw new Error(body.error || `HTTP ${response.status}`);
+        }
+
+        state.lastSyncStatus = body;
+        return body;
+      } catch (error) {
+        state.lastSyncStatus = null;
+        if (!silent) {
+          setText(estadoRegistro, `Error refrescando sync-status: ${error.message}`);
+        }
+        throw error;
+      }
+    }
+
+    async function fetchAttendanceForPin(pin, options = {}) {
+      const { updateUi = true, silent = false } = options;
+
+      try {
+        const response = await fetch(`${getBaseUrl()}/adms/attendance?pin=${encodeURIComponent(pin)}&limit=10`, {
+          cache: 'no-store'
+        });
+        const body = await response.json();
+
+        if (!response.ok) {
+          throw new Error(body.error || `HTTP ${response.status}`);
+        }
+
+        state.lastAttendance = body;
+        if (updateUi) {
+          setJsonOutput(attendanceOutput, body);
+        }
+
+        return body;
+      } catch (error) {
+        if (!silent) {
+          setJsonOutput(attendanceOutput, {
+            status: 'error',
+            error: error.message
+          });
+          setText(estadoAsistencia, `Error consultando asistencia: ${error.message}`);
+        }
+        throw error;
+      }
+    }
+
+    function evaluateCompositeState() {
+      const devices = Array.isArray(state.lastDevices) ? state.lastDevices : [];
+      const { online: hasOnlineDevice, deviceState } = updateDeviceStatus(devices);
+      const commandStatus = Array.isArray(state.lastCommandStatus) ? state.lastCommandStatus : [];
+      const syncStatus = state.lastSyncStatus && typeof state.lastSyncStatus === 'object' ? state.lastSyncStatus : null;
+      const attendance = Array.isArray(state.lastAttendance) ? state.lastAttendance : [];
+      const expectedCommands = getExpectedCommands();
+      const attendanceGroups = splitAttendanceByEnrollment(attendance, state.enrollmentStartedAt);
+      const cycleSummary = getCurrentCycleSummary();
+
+      updateRegisterButtonState();
+
+      if (expectedCommands.length === 0) {
+        setText(estadoRegistro, 'Sin resultados todavia.');
+        return;
+      }
+
+      const statusById = new Map(commandStatus.map(item => [String(item.id || ''), item]));
+      const pendingStatuses = ['pending', 'queued', 'sent_waiting_ack', 'retry_pending'];
+      const hasConcreteReturnCode = value => value !== undefined && value !== null && String(value).trim() !== '';
+      const commandLines = expectedCommands.map(item => {
+        const current = statusById.get(String(item.id));
+        if (!current || current.found === false) {
+          return `${item.label} pendiente`;
+        }
+        if (current.status === 'queued') {
+          return `${item.label} en cola`;
+        }
+        if (current.status === 'sent_waiting_ack') {
+          return `${item.label} enviado, esperando confirmacion`;
+        }
+        if (current.status === 'retry_pending') {
+          return `${item.label} pendiente de reintento`;
+        }
+        if (String(current.returnCode || '') === '0') {
+          return `${item.label} aceptado`;
+        }
+        return `${item.label} error Return=${current.returnCode || '?'}`;
+      });
+      const commandDestinations = expectedCommands
+        .map(item => statusById.get(String(item.id)))
+        .filter(Boolean)
+        .map(item => {
+          const targetDeviceSn = String(item.targetDeviceSn || '').trim();
+          const siteId = String(item.siteId || '').trim();
+          return targetDeviceSn || siteId ? `${targetDeviceSn || '-'} / ${siteId || '-'}` : '';
+        })
+        .filter(Boolean);
+      const destinationSummary = commandDestinations.length > 0
+        ? `\nDestino: ${Array.from(new Set(commandDestinations)).join(', ')}`
+        : '';
+
+      const anyPending = expectedCommands.some(item => {
+        const current = statusById.get(String(item.id));
+        return !current || current.found === false ||
+          pendingStatuses.includes(String(current.status || ''));
+      });
+      const allAccepted = expectedCommands.length > 0 && expectedCommands.every(item => {
+        const current = statusById.get(String(item.id));
+        return current && current.found === true && String(current.status || '') === 'accepted' && String(current.returnCode || '') === '0';
+      });
+      const failed = commandStatus.find(item => {
+        if (!item || item.found !== true) {
+          return false;
+        }
+
+        const status = String(item.status || '');
+        if (pendingStatuses.includes(status)) {
+          return false;
+        }
+
+        if (status === 'failed') {
+          return true;
+        }
+
+        return hasConcreteReturnCode(item.returnCode) && String(item.returnCode) !== '0';
+      });
+      const anySentWaitingAck = expectedCommands.some(item => {
+        const current = statusById.get(String(item.id));
+        return current && String(current.status || '') === 'sent_waiting_ack';
+      });
+      const anyRetryPending = expectedCommands.some(item => {
+        const current = statusById.get(String(item.id));
+        return current && String(current.status || '') === 'retry_pending';
+      });
+
+      if (failed) {
+        const returnMessage = hasConcreteReturnCode(failed.returnCode)
+          ? `Return=${failed.returnCode}`
+          : `status=${failed.status || 'failed'}`;
+        setText(estadoCommandStatus, `${commandLines.join('\n')}${destinationSummary}\nComando ${failed.id || '?'} devolvio ${returnMessage}.`);
+        setText(estadoRegistro, 'error_dispositivo');
+        return;
+      }
+
+      if (commandStatus.length === 0) {
+        setText(estadoCommandStatus, `encolado: la API genero commandId, pero aun no se consulto command-status.${destinationSummary}`);
+        setText(estadoRegistro, 'encolado');
+        return;
+      }
+
+      if (anyPending) {
+        if (anySentWaitingAck) {
+          setText(estadoCommandStatus, `${commandLines.join('\n')}${destinationSummary}\nComandos enviados al dispositivo, esperando confirmacion.`);
+        } else if (anyRetryPending) {
+          setText(estadoCommandStatus, `${commandLines.join('\n')}${destinationSummary}\nSin confirmacion del dispositivo; los comandos se reenviaran en la siguiente conexion.`);
+        } else {
+          setText(estadoCommandStatus, `${commandLines.join('\n')}${destinationSummary}\nComandos pendientes de ser tomados por el dispositivo.`);
+        }
+
+        if (deviceState === 'offline') {
+          setText(estadoRegistro, 'El dispositivo esta desconectado. Los comandos estan pendientes y se reenviaran cuando vuelva a conectarse.');
+        } else if (hasOnlineDevice) {
+          setText(estadoRegistro, anySentWaitingAck
+            ? 'El dispositivo esta online, pero aun no confirmo los comandos.'
+            : 'pendiente_envio: comandos encolados y pendientes de respuesta del dispositivo.');
+        } else {
+          setText(estadoRegistro, 'El dispositivo no ha comunicado recientemente. Los comandos siguen pendientes.');
+        }
+        if (cycleSummary.isSamePinInForm) {
+          setText(estadoRegistro, `${estadoRegistro.textContent}\nHay un registro en curso para este PIN. Espere a que USERINFO, BIOPHOTO y BIODATA sean aceptados antes de registrar otra vez.`);
+        }
+        return;
+      }
+
+      if (allAccepted) {
+        setText(estadoCommandStatus, `${commandLines.join('\n')}${destinationSummary}\nEl dispositivo recibio y acepto los comandos.`);
+        if (attendanceGroups.recent.length > 0) {
+          setText(estadoAsistencia, 'Registro confirmado: ya existe marcacion para este PIN.');
+          setText(estadoRegistro, 'registrado');
+        } else if (syncStatus && String(syncStatus.deviceSyncStatus || '') === 'accepted_by_device') {
+          setText(estadoAsistencia, 'Comandos aceptados por el dispositivo. Pendiente de una marcacion posterior para confirmar este registro.');
+          setText(estadoRegistro, 'accepted_by_device');
+        } else if (attendanceGroups.old.length > 0) {
+          setText(estadoAsistencia, 'Hay asistencias anteriores para este PIN, pero todavia no hay marcacion nueva para este registro.');
+          setText(estadoRegistro, 'pendiente_marcacion');
+        } else {
+          setText(estadoAsistencia, 'Registro aceptado. Pendiente de marcacion fisica.');
+          setText(estadoRegistro, 'pendiente_marcacion');
+        }
+        return;
+      }
+
+      setText(estadoRegistro, 'encolado');
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => window.setTimeout(resolve, ms));
+    }
+
+    async function pollRegistrationState() {
+      const pin = state.lastPin;
+      const ids = getCommandIds();
+
+      if (!pin || ids.length === 0) {
+        return;
+      }
+
+      state.pollSequence += 1;
+      const sequence = state.pollSequence;
+
+      for (let attempt = 1; attempt <= POLL_MAX_ATTEMPTS; attempt += 1) {
+        try {
+          const [, commandStatusBody] = await Promise.all([
+            fetchDevices(),
+            fetchCommandStatus(ids, { updateUi: true, silent: true }),
+            fetchSyncStatus(pin, { silent: true }),
+            fetchAttendanceForPin(pin, { updateUi: true, silent: true })
+          ]);
+
+          if (sequence !== state.pollSequence) {
+            return;
+          }
+
+          evaluateCompositeState();
+
+          const latestStatuses = Array.isArray(commandStatusBody) ? commandStatusBody : [];
+          const allAcceptedNow = ids.length > 0 && ids.every(id => {
+            const current = latestStatuses.find(item => String(item.id || '') === String(id));
+            return current && current.found === true && String(current.status || '') === 'accepted' && String(current.returnCode || '') === '0';
+          });
+
+          if (allAcceptedNow) {
+            await Promise.all([
+              fetchSyncStatus(pin, { silent: true }),
+              fetchAttendanceForPin(pin, { updateUi: true, silent: true })
+            ]);
+            if (sequence !== state.pollSequence) {
+              return;
+            }
+            evaluateCompositeState();
+            return;
+          }
+
+          const currentRegisterText = String(estadoRegistro.textContent || '');
+          if (
+            currentRegisterText === 'registrado' ||
+            currentRegisterText === 'accepted_by_device' ||
+            currentRegisterText === 'pendiente_marcacion' ||
+            currentRegisterText.startsWith('error_dispositivo')
+          ) {
+            return;
+          }
+        } catch (error) {
+          if (sequence !== state.pollSequence) {
+            return;
+          }
+          setText(estadoRegistro, `Error durante seguimiento automatico: ${error.message}`);
+        }
+
+        if (attempt < POLL_MAX_ATTEMPTS) {
+          await sleep(POLL_INTERVAL_MS);
+        }
+      }
+    }
+
+    async function registerPerson() {
+      if (!validateForm()) {
+        return;
+      }
+
+      const cycleSummary = getCurrentCycleSummary();
+      if (cycleSummary.isSamePinInForm && cycleSummary.hasPending) {
+        updateRegisterButtonState();
+        setText(estadoRegistro, 'Hay un registro en curso para este PIN. Espere a que USERINFO, BIOPHOTO y BIODATA sean aceptados antes de registrar otra vez.');
+        return;
+      }
+
+      const mode = getCurrentMode();
+      const endpoint = getCurrentEndpoint();
+      const formData = new FormData();
+      const targetInfo = getSelectedDeviceTargetInfo();
+
+      if (mode === 'completo_con_biodata') {
+        const confirmed = confirm('Entiendo que esta BIODATA se copiara desde otro PIN y no debe usarse para personas reales.');
+        if (!confirmed) {
+          setText(estadoRegistro, 'Registro cancelado. La prueba tecnica con BIODATA copiada requiere confirmacion explicita.');
+          return;
+        }
+      }
+
+      formData.append('pin', pinInput.value.trim());
+      formData.append('name', nameInput.value.trim());
+      formData.append('password', passwordInput.value);
+      formData.append('image', imageFileInput.files[0]);
+      formData.append('imageMode', FIXED_IMAGE_MODE);
+      formData.append('profilePin', FIXED_PROFILE_PIN);
+      formData.append('contentTerminator', FIXED_CONTENT_TERMINATOR);
+      if (targetInfo.targetDeviceSn) formData.append('targetDeviceSn', targetInfo.targetDeviceSn);
+      if (targetInfo.siteId) formData.append('siteId', targetInfo.siteId);
+      if (targetInfo.deviceName) formData.append('deviceName', targetInfo.deviceName);
+      if (targetInfo.locationName) formData.append('locationName', targetInfo.locationName);
+
+      if (mode === 'completo_con_biodata') {
+        formData.append('sourceFacePin', sourceFacePinInput.value.trim());
+      }
+
+      state.lastMode = mode;
+      state.lastEndpoint = endpoint;
+      state.lastEnrollResponse = null;
+      state.currentEnrollCycle = null;
+      state.lastCommandStatus = null;
+      state.lastSyncStatus = null;
+      state.lastAttendance = null;
+      state.enrollmentStartedAt = '';
+      state.pollSequence += 1;
+      updateRegisterButtonState();
+
+      setJsonOutput(commandStatusOutput, null);
+      setJsonOutput(attendanceOutput, null);
+      setText(endpointUsado, endpoint);
+      setText(modoUsado, getCurrentModeLabel(mode));
+      setText(estadoRegistro, `encolado: enviando solicitud al backend...\nEste registro se enviara a:\n${targetInfo.deviceName || 'Dispositivo no seleccionado'} / ${targetInfo.targetDeviceSn || '-'} / ${targetInfo.locationName || targetInfo.siteId || 'Sin sede'}`);
+      setText(estadoCommandStatus, 'Sin resultados todavia.');
+      setText(estadoAsistencia, 'Sin resultados todavia.');
+      setText(estadoDispositivo, 'Sin resultados todavia.');
+
+      try {
+        try {
+          const devices = await fetchDevices();
+          updateDeviceStatus(devices);
+        } catch (deviceError) {
+          setText(estadoDispositivo, `No fue posible consultar /adms/devices antes de registrar: ${deviceError.message}`);
+        }
+
+        const response = await fetch(`${getBaseUrl()}${endpoint}`, {
+          method: 'POST',
+          body: formData
+        });
+
+        let body;
+        try {
+          body = await response.json();
+        } catch (_error) {
+          body = { error: 'La respuesta no fue JSON valido.' };
+        }
+
+        if (!response.ok) {
+          const errorPayload = {
+            status: response.status,
+            error: body.error || `HTTP ${response.status}`,
+            body
+          };
+          setJsonOutput(enrollJsonOutput, errorPayload);
+          setText(estadoRegistro, `Error HTTP ${response.status}: ${errorPayload.error}`);
+          return;
+        }
+
+        state.lastEnrollResponse = body;
+        state.lastPin = body.pin || pinInput.value.trim();
+        state.enrollmentStartedAt = body.enrollmentStartedAt || new Date().toISOString();
+        state.currentEnrollCycle = {
+          pin: state.lastPin,
+          userCommandId: body.userCommandId || '',
+          biophotoCommandId: body.biophotoCommandId || '',
+          biodataCommandId: mode === 'completo_con_biodata' ? (body.biodataCommandId || '') : '',
+          startedAt: state.enrollmentStartedAt
+        };
+        attendancePinInput.value = state.lastPin;
+
+        setJsonOutput(enrollJsonOutput, body);
+        setText(userCommandIdValue, body.userCommandId || '');
+        setText(biophotoCommandIdValue, body.biophotoCommandId || '');
+        if (mode === 'completo_con_biodata') {
+          setText(biodataCommandIdValue, body.biodataCommandId || '');
+        } else {
+          setText(biodataCommandIdValue, 'No enviada en modo real seguro');
+        }
+
+        setText(
+          estadoRegistro,
+          mode === 'completo_con_biodata'
+            ? 'encolado: la API recibio la solicitud y genero comandos.'
+            : 'Usuario enviado. Ahora capture la biometria real en el reloj para este PIN y luego consulte asistencia.'
+        );
+        updateRegisterButtonState();
+        pollRegistrationState();
+      } catch (error) {
+        setJsonOutput(enrollJsonOutput, {
+          status: 'network-error',
+          error: error.message
+        });
+        setText(estadoRegistro, `Error enviando enrolamiento: ${error.message}`);
+      }
+    }
+
+    async function consultAttendanceManual() {
+      const pin = attendancePinInput.value.trim();
+      if (!pin) {
+        setText(estadoAsistencia, 'Debes ingresar un PIN para consultar asistencia.');
+        return;
+      }
+
+      const from = attendanceFromInput.value;
+      const to = attendanceToInput.value;
+      if (!from || !to) {
+        setText(estadoAsistencia, 'Debes seleccionar fecha desde y hasta.');
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${getBaseUrl()}/adms/attendance?pin=${encodeURIComponent(pin)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&limit=10`,
+          { cache: 'no-store' }
+        );
+        const body = await response.json();
+
+        if (!response.ok) {
+          throw new Error(body.error || `HTTP ${response.status}`);
+        }
+
+        state.lastAttendance = body;
+        setJsonOutput(attendanceOutput, body);
+        setText(
+          estadoAsistencia,
+          body.length > 0
+            ? 'Asistencia encontrada para el PIN consultado.'
+            : 'No hay marcaciones para ese PIN en el rango consultado.'
+        );
+      } catch (error) {
+        setJsonOutput(attendanceOutput, {
+          status: 'error',
+          error: error.message
+        });
+        setText(estadoAsistencia, `Error consultando asistencia: ${error.message}`);
+      }
+    }
+
+    function setDefaultDates() {
+      const today = new Date().toISOString().slice(0, 10);
+      attendanceFromInput.value = today;
+      attendanceToInput.value = today;
+    }
+
+    imageFileInput.addEventListener('change', () => {
+      setPreview(imageFileInput.files[0]);
+    });
+
+    targetDeviceSelect.addEventListener('change', () => {
+      applySelectedDeviceSn(targetDeviceSelect.value);
+      const targetInfo = getSelectedDeviceTargetInfo();
+      if (!targetInfo.targetDeviceSn) {
+        setText(targetDeviceHint, 'Esta sede no tiene dispositivos habilitados. Agrega un SN permitido en Configuracion ADMS.');
+        updateRecordsScopeUi();
+        if (getRecordsScopeMode() === 'device') {
+          reloadActiveRecordsTab();
+        }
+        return;
+      }
+      setText(targetDeviceHint, `Este registro se enviara a:\n${targetInfo.deviceName || 'Dispositivo no seleccionado'} / ${targetInfo.targetDeviceSn || '-'} / ${targetInfo.locationName || targetInfo.siteId || 'Sin sede'}`);
+      updateRecordsScopeUi();
+      if (getRecordsScopeMode() === 'device') {
+        reloadActiveRecordsTab();
+      }
+    });
+
+    operatorAdvancedToggle.addEventListener('click', () => {
+      state.operatorAdvanced = !state.operatorAdvanced;
+      applyAlmacenOperatorUi();
+    });
+
+    pinInput.addEventListener('input', () => {
+      updateRegisterButtonState();
+    });
+
+    registerModeInput.addEventListener('change', renderModeUI);
+    recordsScopeMode.addEventListener('change', () => {
+      state.recordsScopeMode = recordsScopeMode.value === 'all' ? 'all' : 'device';
+      updateRecordsScopeUi();
+      reloadActiveRecordsTab();
+    });
+
+    checkHealthButton.addEventListener('click', event => {
+      event.preventDefault();
+      checkHealth();
+    });
+
+    registerButton.addEventListener('click', event => {
+      event.preventDefault();
+      registerPerson();
+    });
+
+    checkCommandsButton.addEventListener('click', event => {
+      event.preventDefault();
+      const currentCycle = state.currentEnrollCycle || {};
+      const ids = [
+        currentCycle.userCommandId,
+        currentCycle.biophotoCommandId,
+        currentCycle.biodataCommandId
+      ].filter(Boolean);
+      if (ids.length === 0) {
+        setText(estadoCommandStatus, 'Aun no hay comandos enviados.');
+        setJsonOutput(commandStatusOutput, null);
+        return;
+      }
+
+      fetchCommandStatus(ids, { updateUi: true, silent: false })
+        .then(() => fetchSyncStatus(state.lastPin, { silent: false }))
+        .then(() => evaluateCompositeState())
+        .catch(() => {});
+    });
+
+    fetchAttendanceButton.addEventListener('click', event => {
+      event.preventDefault();
+      consultAttendanceManual();
+    });
+
+    // Funciones para la secciÃ³n de Registros guardados
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      document.getElementById(`${tabName}Tab`).classList.add('active');
+    }
+
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const tabName = button.dataset.tab;
+        switchTab(tabName);
+      });
+    });
+
+    async function loadOverview() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          clearRecordsOverview();
+          return;
+        }
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/overview'));
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+
+        document.getElementById('totalPersonas').textContent = data.totalPersonas;
+        document.getElementById('totalAsistencias').textContent = data.totalAsistencias;
+        document.getElementById('totalDispositivos').textContent = data.totalDispositivos;
+        document.getElementById('totalComandos').textContent = data.totalComandos;
+        document.getElementById('totalPendientes').textContent = data.totalPendientes;
+        document.getElementById('totalBiodata').textContent = data.totalBiodata;
+        document.getElementById('totalFotos').textContent = data.totalFotos;
+      } catch (error) {
+        console.error('Error cargando resumen:', error);
+        alert('Error cargando resumen: ' + error.message);
+      }
+    }
+
+    async function loadPersons() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          state.lastPersons = [];
+          state.lastPersonsMeta = { message: 'No hay dispositivo activo para filtrar registros.' };
+          resetPagination('persons');
+          renderPersonsList(state.lastPersons);
+          return;
+        }
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/persons'));
+        const body = await response.json();
+
+        if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+        state.lastPersons = Array.isArray(body) ? body : (Array.isArray(body.records) ? body.records : []);
+        state.lastPersonsMeta = Array.isArray(body) ? null : body;
+        resetPagination('persons');
+        renderPersonsList(state.lastPersons);
+      } catch (error) {
+        console.error('Error cargando personas:', error);
+        alert('Error cargando personas: ' + error.message);
+      }
+    }
+
+    async function loadAttendanceRecords() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          state.lastAttendanceRecords = [];
+          resetPagination('attendance');
+          renderBlockedRecordsState('attendanceRecordsList', attendanceCountSummary, 'Mostrando 0 de 0 asistencias.', 'No hay dispositivo activo para filtrar registros.');
+          attendancePagination.innerHTML = '';
+          return;
+        }
+
+        const pin = document.getElementById('recordsAttendancePin').value.trim();
+        const from = document.getElementById('recordsAttendanceFrom').value;
+        const to = document.getElementById('recordsAttendanceTo').value;
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/attendance', {
+          includeSn: true,
+          extraParams: { pin, from, to }
+        }));
+        const records = await response.json();
+
+        if (!response.ok) throw new Error(records.error || `HTTP ${response.status}`);
+        state.lastAttendanceRecords = Array.isArray(records) ? records : [];
+        resetPagination('attendance');
+        renderAttendanceRecordsList(state.lastAttendanceRecords);
+      } catch (error) {
+        console.error('Error cargando asistencias:', error);
+        alert('Error cargando asistencias: ' + error.message);
+      }
+    }
+
+    async function loadDevices() {
+      try {
+        const response = await fetch(`${getBaseUrl()}/adms/devices`);
+        const devices = await response.json();
+
+        if (!response.ok) throw new Error(devices.error || `HTTP ${response.status}`);
+        state.lastDevicesRecords = Array.isArray(devices) ? devices : [];
+        resetPagination('devices');
+        renderDevicesRecordsList(state.lastDevicesRecords);
+      } catch (error) {
+        console.error('Error cargando dispositivos:', error);
+        alert('Error cargando dispositivos: ' + error.message);
+      }
+    }
+
+    async function loadCommands() {
+      try {
+        const pin = document.getElementById('commandsPin').value.trim();
+        const commandType = document.getElementById('commandsType').value;
+        const status = document.getElementById('commandsStatus').value;
+
+        let url = `${getBaseUrl()}/adms/records/commands?`;
+        if (pin) url += `pin=${encodeURIComponent(pin)}&`;
+        if (commandType) url += `commandType=${encodeURIComponent(commandType)}&`;
+        if (status) url += `status=${encodeURIComponent(status)}&`;
+
+        const response = await fetch(buildNoCacheUrl(url), { cache: 'no-store' });
+        const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+        if (!contentType.includes('application/json')) {
+          const bodyText = await response.text();
+          throw new Error(`El endpoint devolvio HTML en vez de JSON. URL consultada: ${url}${bodyText ? '' : ''}`);
+        }
+        const commands = await response.json();
+
+        if (!response.ok) throw new Error(commands.error || `HTTP ${response.status}`);
+        state.lastCommandsRecords = Array.isArray(commands) ? commands : [];
+        resetPagination('commands');
+        renderCommandsList(state.lastCommandsRecords);
+      } catch (error) {
+        console.error('Error cargando comandos:', error);
+        alert('Error cargando comandos: ' + error.message);
+      }
+    }
+
+    async function loadBiodata() {
+      try {
+        const response = await fetch(`${getBaseUrl()}/adms/records/biodata`);
+        const biodata = await response.json();
+
+        if (!response.ok) throw new Error(biodata.error || `HTTP ${response.status}`);
+        state.lastBiodataRecords = Array.isArray(biodata) ? biodata : [];
+        resetPagination('biodata');
+        renderBiodataList(state.lastBiodataRecords);
+      } catch (error) {
+        console.error('Error cargando BIODATA:', error);
+        alert('Error cargando BIODATA: ' + error.message);
+      }
+    }
+
+    async function loadPhotos() {
+      try {
+        const response = await fetch(`${getBaseUrl()}/adms/records/photos`);
+        const photos = await response.json();
+
+        if (!response.ok) throw new Error(photos.error || `HTTP ${response.status}`);
+        state.lastPhotosRecords = Array.isArray(photos) ? photos : [];
+        resetPagination('photos');
+        renderPhotosList(state.lastPhotosRecords);
+      } catch (error) {
+        console.error('Error cargando fotos:', error);
+        alert('Error cargando fotos: ' + error.message);
+      }
+    }
+
+    function describeDeleteScope(scope) {
+      if (scope === 'local+device') return 'Local + dispositivo';
+      if (scope === 'device') return 'Solo dispositivo';
+      return 'Solo local';
+    }
+
+    function describeDeviceDeleteStatus(entry) {
+      if (!entry.deviceDeleteRequested) {
+        return 'Solo local';
+      }
+
+      const status = String(entry.deviceDeleteStatus || '').trim();
+      if (status === 'accepted') return 'Borrado fisico aceptado por dispositivo';
+      if (status === 'failed') return 'Borrado fisico fallido';
+      if (status === 'sent_waiting_ack') return 'Borrado enviado, esperando confirmacion';
+      if (status === 'queued' || status === 'retry_pending') return 'Borrado del dispositivo en cola';
+      return 'Borrado remoto solicitado';
+    }
+
+    function describeAuditOverallStatus(entry) {
+      const scope = String(entry?.scope || '').trim();
+      const deviceDeleteStatus = String(entry?.deviceDeleteStatus || '').trim();
+      const returnCode = String(entry?.deviceDeleteReturnCode ?? '').trim();
+
+      if (scope === 'local+device') {
+        if (deviceDeleteStatus === 'accepted' && returnCode === '0') {
+          return 'Borrado local y fisico confirmado';
+        }
+        if (deviceDeleteStatus === 'failed') {
+          return 'Borrado local realizado, borrado fisico fallido';
+        }
+        if (['queued', 'retry_pending', 'sent_waiting_ack'].includes(deviceDeleteStatus)) {
+          return 'Pendiente de confirmacion del dispositivo';
+        }
+      }
+
+      return entry?.status || 'No disponible';
+    }
+
+    function getAttendanceDisplayDate(record) {
+      return record?.timestamp
+        || record?.fecha_hora
+        || record?.fecha_hora_dispositivo
+        || record?.receivedAt
+        || 'No disponible';
+    }
+
+    function getAttendanceDisplayMethod(record) {
+      return record?.verifyMode
+        || record?.verifyStatus
+        || record?.verify_mode
+        || record?.metodo
+        || 'No disponible';
+    }
+
+    function renderAuditField(label, value, fallback = 'No disponible') {
+      const normalized = value === undefined || value === null || value === '' ? fallback : value;
+      return `<p><strong>${label}:</strong> ${normalized}</p>`;
+    }
+
+    function getAuditRemoteStatusKey(entry) {
+      if (!entry?.deviceDeleteRequested) {
+        return 'solo-local';
+      }
+      const status = String(entry?.deviceDeleteStatus || '').trim();
+      return status || 'no-remote';
+    }
+
+    function isAuditDeviceRelated(entry) {
+      return String(entry?.scope || '').trim() === 'local+device' || Boolean(entry?.deviceDeleteCommandId);
+    }
+
+    function applyAuditFilters(records) {
+      const pinFilter = String(auditPinFilter?.value || '').trim().toLowerCase();
+      const scopeFilter = String(auditScopeFilter?.value || 'all').trim();
+      const remoteStatusFilter = String(auditRemoteStatusFilter?.value || 'all').trim();
+      const overallStatusFilter = String(auditOverallStatusFilter?.value || 'all').trim();
+      const reasonFilter = String(auditReasonFilter?.value || '').trim().toLowerCase();
+      const onlyWithDevice = Boolean(auditOnlyWithDevice?.checked);
+
+      return (Array.isArray(records) ? records : []).filter(entry => {
+        const pin = String(entry?.pin || '').trim().toLowerCase();
+        const scope = String(entry?.scope || '').trim();
+        const reason = String(entry?.reason || entry?.motivo || '').toLowerCase();
+        const remoteStatusKey = getAuditRemoteStatusKey(entry);
+        const overallStatusText = describeAuditOverallStatus(entry);
+
+        if (pinFilter && !pin.includes(pinFilter)) return false;
+        if (scopeFilter !== 'all' && scope !== scopeFilter) return false;
+        if (remoteStatusFilter !== 'all' && remoteStatusKey !== remoteStatusFilter) return false;
+        if (overallStatusFilter !== 'all' && overallStatusText !== overallStatusFilter) return false;
+        if (reasonFilter && !reason.includes(reasonFilter)) return false;
+        if (onlyWithDevice && !isAuditDeviceRelated(entry)) return false;
+
+        return true;
+      });
+    }
+
+    function renderAuditList(records) {
+      const container = document.getElementById('auditList');
+      const allRecords = Array.isArray(records) ? records : [];
+      const filteredRecords = applyAuditFilters(allRecords);
+      const pageData = paginateList('audit', filteredRecords);
+
+      auditCountSummary.textContent = `Mostrando ${pageData.start}-${pageData.end} de ${filteredRecords.length} auditorias.`;
+      container.innerHTML = '';
+      renderPaginationControls('audit', filteredRecords.length, 'auditPagination');
+
+      if (allRecords.length === 0) {
+        auditCountSummary.textContent = 'Mostrando 0 de 0 auditorias.';
+        container.innerHTML = '<p>No hay resultados para mostrar.</p>';
+        return;
+      }
+
+      if (filteredRecords.length === 0) {
+        auditCountSummary.textContent = 'Mostrando 0 de 0 auditorias.';
+        container.innerHTML = '<p>No hay registros de auditoria para los filtros seleccionados.</p>';
+        return;
+      }
+
+      pageData.items.forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'compact-card';
+        const actionsText = Array.isArray(entry.actions) && entry.actions.length > 0
+          ? entry.actions.join(', ')
+          : 'N/A';
+        const remoteStatusText = describeDeviceDeleteStatus(entry);
+        const overallStatusText = describeAuditOverallStatus(entry);
+        item.innerHTML = `
+          <div class="compact-card-header">
+            <h4 class="compact-card-title">PIN: ${escapeHtml(entry.pin || 'N/A')} - ${escapeHtml(entry.timestamp || 'No disponible')} - ${escapeHtml(overallStatusText)}</h4>
+            <span class="${getStatusBadgeClass(String(entry.deviceDeleteStatus || entry.status || overallStatusText))}">${escapeHtml(String(entry.deviceDeleteStatus || entry.status || 'N/A'))}</span>
+          </div>
+          <div class="compact-card-line"><strong>Alcance:</strong> <span>${escapeHtml(describeDeleteScope(entry.scope))}</span></div>
+          <div class="compact-card-line"><strong>Estado remoto:</strong> <span>${escapeHtml(remoteStatusText)}</span></div>
+          <div class="compact-card-line"><strong>Motivo:</strong> <span>${escapeHtml(entry.reason || entry.motivo || 'No disponible')}</span></div>
+          <div class="compact-card-line muted"><span>CommandId: ${escapeHtml(entry.deviceDeleteCommandId || 'N/A')}</span><span>Return: ${escapeHtml(entry.deviceDeleteReturnCode ?? 'N/A')}</span></div>
+          <div class="compact-card-line muted"><span>Confirmado: ${escapeHtml(entry.deviceDeleteAcknowledgedAt || 'No disponible')}</span></div>
+          <div class="compact-card-line muted"><span>Acciones: ${escapeHtml(actionsText)}</span></div>
+          <div class="compact-card-line muted"><span>deviceDeleteStatus: ${escapeHtml(entry.deviceDeleteStatus || 'No disponible')}</span></div>
+          <div class="compact-card-line muted"><span>deviceDeleteRawLine: ${escapeHtml(entry.deviceDeleteRawLine || 'No disponible')}</span></div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderAttendanceRecordsList(records) {
+      const container = document.getElementById('attendanceRecordsList');
+      const allRecords = Array.isArray(records) ? records : [];
+      const pageData = paginateList('attendance', allRecords);
+      attendanceCountSummary.textContent = `Mostrando ${pageData.start}-${pageData.end} de ${allRecords.length} asistencias.`;
+      container.innerHTML = '';
+      renderPaginationControls('attendance', allRecords.length, 'attendancePagination');
+
+      if (allRecords.length === 0) {
+        attendanceCountSummary.textContent = 'Mostrando 0 de 0 asistencias.';
+        container.innerHTML = '<p>No hay resultados para mostrar.</p>';
+        return;
+      }
+
+      pageData.items.forEach(record => {
+        const item = document.createElement('div');
+        item.className = 'record-item';
+        item.innerHTML = `
+          <h4>PIN: ${record.pin}</h4>
+          <p>Fecha/Hora: ${getAttendanceDisplayDate(record)}</p>
+          <p>Metodo: ${getAttendanceDisplayMethod(record)}</p>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderDevicesRecordsList(devices) {
+      const container = document.getElementById('devicesList');
+      const allDevices = Array.isArray(devices) ? devices : [];
+      const pageData = paginateList('devices', allDevices);
+      devicesCountSummary.textContent = `Mostrando ${pageData.start}-${pageData.end} de ${allDevices.length} dispositivos.`;
+      container.innerHTML = '';
+      renderPaginationControls('devices', allDevices.length, 'devicesPagination');
+
+      if (allDevices.length === 0) {
+        devicesCountSummary.textContent = 'Mostrando 0 de 0 dispositivos.';
+        container.innerHTML = '<p>No hay resultados para mostrar.</p>';
+        return;
+      }
+
+      pageData.items.forEach(device => {
+        const item = document.createElement('div');
+        item.className = 'record-item';
+        item.innerHTML = `
+          <h4>SN: ${device.sn || device.numero_serie || 'N/A'}</h4>
+          <p>IP: ${device.ip || device.ultima_ip || 'N/A'}</p>
+          <p>Estado: ${device.estado || 'N/A'}</p>
+          <p>Ultima conexion: ${device.ultima_conexion || 'N/A'}</p>
+          ${device.userCount ? `<p>Usuarios: ${device.userCount}</p>` : ''}
+          ${device.faceCount ? `<p>Fotos: ${device.faceCount}</p>` : ''}
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderCommandsList(commands) {
+      const container = document.getElementById('commandsList');
+      const allCommands = Array.isArray(commands) ? commands : [];
+      const pageData = paginateList('commands', allCommands);
+      commandsCountSummary.textContent = `Mostrando ${pageData.start}-${pageData.end} de ${allCommands.length} comandos.`;
+      container.innerHTML = '';
+      renderPaginationControls('commands', allCommands.length, 'commandsPagination');
+
+      if (allCommands.length === 0) {
+        commandsCountSummary.textContent = 'Mostrando 0 de 0 comandos.';
+        container.innerHTML = '<p>No hay resultados para mostrar.</p>';
+        return;
+      }
+
+      pageData.items.forEach(cmd => {
+        const item = document.createElement('div');
+        item.className = 'record-item';
+        item.innerHTML = `
+          <h4>ID: ${cmd.commandId} - ${cmd.commandType}</h4>
+          <p>PIN: ${cmd.pin}</p>
+          <p>Estado: ${cmd.status}</p>
+          ${cmd.targetDeviceSn || cmd.siteId ? `<p>Destino: ${(cmd.targetDeviceSn || '-')} / ${(cmd.siteId || '-')}</p>` : ''}
+          ${cmd.statusSource ? `<p>Origen estado: ${cmd.statusSource}</p>` : ''}
+          ${cmd.returnCode !== undefined && cmd.returnCode !== null && String(cmd.returnCode).trim() !== '' ? `<p>Return: ${cmd.returnCode}</p>` : ''}
+          <p>Enviado: ${cmd.sentAt}</p>
+          ${cmd.acknowledgedAt ? `<p>Confirmado: ${cmd.acknowledgedAt}</p>` : ''}
+          ${cmd.error ? `<p>Error: ${cmd.error}</p>` : ''}
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderBiodataList(records) {
+      const container = document.getElementById('biodataList');
+      const allRecords = Array.isArray(records) ? records : [];
+      const pageData = paginateList('biodata', allRecords);
+      biodataCountSummary.textContent = `Mostrando ${pageData.start}-${pageData.end} de ${allRecords.length} registros BIODATA.`;
+      container.innerHTML = '';
+      renderPaginationControls('biodata', allRecords.length, 'biodataPagination');
+
+      if (allRecords.length === 0) {
+        biodataCountSummary.textContent = 'Mostrando 0 de 0 registros BIODATA.';
+        container.innerHTML = '<p>No hay resultados para mostrar.</p>';
+        return;
+      }
+
+      pageData.items.forEach(item => {
+        const hasTmp = item.hasTmp ? 'Si' : 'No';
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'record-item';
+        itemDiv.innerHTML = `
+          <h4>PIN: ${item.pin}</h4>
+          <p>Tipo: ${item.type} | Version: ${item.majorVer}.${item.minorVer}</p>
+          <p>Indice: ${item.index} | Tiene TMP: ${hasTmp}</p>
+          <p>Timestamp: ${item.timestamp}</p>
+        `;
+        container.appendChild(itemDiv);
+      });
+    }
+
+    function renderPhotosList(records) {
+      const container = document.getElementById('photosList');
+      const allRecords = Array.isArray(records) ? records : [];
+      const pageData = paginateList('photos', allRecords);
+      photosCountSummary.textContent = `Mostrando ${pageData.start}-${pageData.end} de ${allRecords.length} fotos.`;
+      container.innerHTML = '';
+      renderPaginationControls('photos', allRecords.length, 'photosPagination');
+
+      if (allRecords.length === 0) {
+        photosCountSummary.textContent = 'Mostrando 0 de 0 fotos.';
+        container.innerHTML = '<p>No hay resultados para mostrar.</p>';
+        return;
+      }
+
+      pageData.items.forEach(photo => {
+        const item = document.createElement('div');
+        item.className = 'record-item';
+        item.innerHTML = `
+          <h4>PIN: ${photo.pin}</h4>
+          <p>Archivo: ${photo.fileName}</p>
+          <p>Tamano: ${photo.size} bytes | Modificado: ${photo.modifiedAt}</p>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    async function loadAudit() {
+      try {
+        const response = await fetch(`${getBaseUrl()}/adms/records/delete-audit`);
+        const audit = await response.json();
+
+        if (!response.ok) throw new Error(audit.error || `HTTP ${response.status}`);
+        state.lastAuditRecords = Array.isArray(audit) ? audit : [];
+        resetPagination('audit');
+        renderAuditList(state.lastAuditRecords);
+      } catch (error) {
+        console.error('Error cargando auditoria:', error);
+        alert('Error cargando auditoria: ' + error.message);
+      }
+    }
+
+    // FunciÃ³n global para preparar borrado
+    window.prepareDelete = async function(pin) {
+      try {
+        const targetInfo = getSelectedDeviceTargetInfo();
+        const scopeChoice = prompt(
+          `Selecciona el alcance del borrado para PIN ${pin}:\n\n1 = Solo local\n2 = Local + dispositivo\n\nPresiona Cancelar para salir.`,
+          '1'
+        );
+
+        if (scopeChoice === null) {
+          return;
+        }
+
+        const selectedScope = String(scopeChoice).trim() === '2' ? 'local+device' : 'local';
+        const selectedScopeLabel = selectedScope === 'local+device' ? 'Local + dispositivo' : 'Solo local';
+        const remoteTargetText = `${targetInfo.deviceName || 'Dispositivo no seleccionado'} / ${targetInfo.targetDeviceSn || '-'} / ${targetInfo.locationName || targetInfo.siteId || 'Sin sede'}`;
+
+        const response = await fetch(`${getBaseUrl()}/adms/records/delete-preview`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pin,
+            scope: selectedScope,
+            deleteAttendance: false,
+            deletePhoto: false,
+            deleteBiodata: false,
+            targetDeviceSn: selectedScope === 'local+device' ? targetInfo.targetDeviceSn : undefined,
+            siteId: selectedScope === 'local+device' ? targetInfo.siteId : undefined,
+            deviceName: selectedScope === 'local+device' ? targetInfo.deviceName : undefined,
+            locationName: selectedScope === 'local+device' ? targetInfo.locationName : undefined
+          })
+        });
+        const result = await response.json();
+
+        if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+
+        const preview = result.preview;
+        const confirmMessage = `Confirmas borrar el PIN ${pin}?\n\nAlcance seleccionado:\n- ${selectedScopeLabel}\n\nAdvertencias:\n- Se marcara eliminado en el sistema local.\n${selectedScope === 'local+device'
+  ? `- Se enviara DELETE_USERINFO al dispositivo fisico.\n- Destino: ${remoteTargetText}\n- La confirmacion fisica requiere Return=0.\n`
+  : '- No se enviara comando al dispositivo.\n'}${preview.advertencias.length > 0 ? `\nAdvertencias adicionales:\n- ${preview.advertencias.join('\n- ')}` : ''}\n\nAceptar = continuar\nCancelar = no hacer nada`;
+
+        const confirmed = confirm(confirmMessage);
+        if (!confirmed) {
+          alert('Borrado cancelado.');
+          return;
+        }
+
+        const confirmation = `BORRAR PIN ${pin}`;
+        const deleteResponse = await fetch(`${getBaseUrl()}/adms/records/delete-person`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pin,
+            scope: selectedScope,
+            deleteAttendance: false,
+            deletePhoto: false,
+            deleteBiodata: false,
+            reason: 'Borrado desde panel',
+            confirmation,
+            targetDeviceSn: selectedScope === 'local+device' ? targetInfo.targetDeviceSn : undefined,
+            siteId: selectedScope === 'local+device' ? targetInfo.siteId : undefined,
+            deviceName: selectedScope === 'local+device' ? targetInfo.deviceName : undefined,
+            locationName: selectedScope === 'local+device' ? targetInfo.locationName : undefined
+          })
+        });
+        const deleteResult = await deleteResponse.json();
+
+        if (!deleteResponse.ok) throw new Error(deleteResult.error || `HTTP ${deleteResponse.status}`);
+
+        alert(deleteResult.message);
+        loadPersons();
+        if (typeof loadOverview === 'function') {
+          loadOverview().catch(() => {});
+        }
+        if (typeof loadDeleteAudit === 'function') {
+          loadDeleteAudit().catch(() => {});
+        }
+      } catch (error) {
+        console.error('Error en borrado:', error);
+        alert('Error en borrado: ' + error.message);
+      }
+    };
+
+    async function loadOverview() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          clearRecordsOverview();
+          return;
+        }
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/overview', { includeSn: true }));
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+
+        document.getElementById('totalPersonas').textContent = data.totalPersonas;
+        document.getElementById('totalAsistencias').textContent = data.totalAsistencias;
+        document.getElementById('totalDispositivos').textContent = data.totalDispositivos;
+        document.getElementById('totalComandos').textContent = data.totalComandos;
+        document.getElementById('totalPendientes').textContent = data.totalPendientes;
+        document.getElementById('totalBiodata').textContent = data.totalBiodata;
+        document.getElementById('totalFotos').textContent = data.totalFotos;
+      } catch (error) {
+        console.error('Error cargando resumen:', error);
+        alert('Error cargando resumen: ' + error.message);
+      }
+    }
+
+    async function loadPersons() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          state.lastPersons = [];
+          state.lastPersonsMeta = { message: 'No hay dispositivo activo para filtrar registros.' };
+          resetPagination('persons');
+          renderPersonsList(state.lastPersons);
+          return;
+        }
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/persons', { includeSn: true }));
+        const body = await response.json();
+
+        if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+        state.lastPersons = Array.isArray(body) ? body : (Array.isArray(body.records) ? body.records : []);
+        state.lastPersonsMeta = Array.isArray(body) ? null : body;
+        resetPagination('persons');
+        renderPersonsList(state.lastPersons);
+      } catch (error) {
+        console.error('Error cargando personas:', error);
+        alert('Error cargando personas: ' + error.message);
+      }
+    }
+
+    async function loadAttendanceRecords() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          state.lastAttendanceRecords = [];
+          resetPagination('attendance');
+          renderBlockedRecordsState('attendanceRecordsList', attendanceCountSummary, 'Mostrando 0 de 0 asistencias.', 'No hay dispositivo activo para filtrar registros.');
+          attendancePagination.innerHTML = '';
+          return;
+        }
+
+        const pin = document.getElementById('recordsAttendancePin').value.trim();
+        const from = document.getElementById('recordsAttendanceFrom').value;
+        const to = document.getElementById('recordsAttendanceTo').value;
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/attendance', {
+          includeSn: true,
+          extraParams: { pin, from, to }
+        }));
+        const records = await response.json();
+
+        if (!response.ok) throw new Error(records.error || `HTTP ${response.status}`);
+        state.lastAttendanceRecords = Array.isArray(records) ? records : [];
+        resetPagination('attendance');
+        renderAttendanceRecordsList(state.lastAttendanceRecords);
+      } catch (error) {
+        console.error('Error cargando asistencias:', error);
+        alert('Error cargando asistencias: ' + error.message);
+      }
+    }
+
+    async function loadDevices() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          state.lastDevicesRecords = [];
+          resetPagination('devices');
+          renderBlockedRecordsState('devicesList', devicesCountSummary, 'Mostrando 0 de 0 dispositivos.', 'No hay dispositivo activo para filtrar registros.');
+          devicesPagination.innerHTML = '';
+          return;
+        }
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/devices', { includeSn: true }));
+        let data;
+
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          console.error('Respuesta no JSON:', parseError);
+          const container = document.getElementById('devicesList');
+          container.innerHTML = '<p>El endpoint de dispositivos no devolvio JSON. Revisar backend.</p>';
+          devicesCountSummary.textContent = 'Mostrando 0 de 0 dispositivos.';
+          devicesPagination.innerHTML = '';
+          return;
+        }
+
+        if (!response.ok || (data.ok === false)) {
+          const container = document.getElementById('devicesList');
+          container.innerHTML = `<p>Error: ${data.error || `HTTP ${response.status}`}</p>`;
+          devicesCountSummary.textContent = 'Mostrando 0 de 0 dispositivos.';
+          devicesPagination.innerHTML = '';
+          return;
+        }
+
+        const devices = Array.isArray(data) ? data : data.devices || [];
+        state.lastDevicesRecords = Array.isArray(devices) ? devices : [];
+        resetPagination('devices');
+        renderDevicesRecordsList(state.lastDevicesRecords);
+      } catch (error) {
+        console.error('Error cargando dispositivos:', error);
+        const container = document.getElementById('devicesList');
+        container.innerHTML = `<p>Error cargando dispositivos: ${error.message}</p>`;
+        devicesCountSummary.textContent = 'Mostrando 0 de 0 dispositivos.';
+        devicesPagination.innerHTML = '';
+      }
+    }
+
+    async function loadCommands() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          state.lastCommandsRecords = [];
+          resetPagination('commands');
+          renderBlockedRecordsState('commandsList', commandsCountSummary, 'Mostrando 0 de 0 comandos.', 'No hay dispositivo activo para filtrar registros.');
+          commandsPagination.innerHTML = '';
+          return;
+        }
+
+        const pin = document.getElementById('commandsPin').value.trim();
+        const commandType = document.getElementById('commandsType').value;
+        const status = document.getElementById('commandsStatus').value;
+
+        const url = buildScopedRecordsUrl('/adms/records/commands', {
+          extraParams: { pin, commandType, status }
+        });
+        const response = await fetch(buildNoCacheUrl(url), { cache: 'no-store' });
+        const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+        if (!contentType.includes('application/json')) {
+          const bodyText = await response.text();
+          throw new Error(`El endpoint devolvio HTML en vez de JSON. URL consultada: ${url}${bodyText ? '' : ''}`);
+        }
+        const commands = await response.json();
+
+        if (!response.ok) throw new Error(commands.error || `HTTP ${response.status}`);
+        state.lastCommandsRecords = Array.isArray(commands) ? commands : [];
+        resetPagination('commands');
+        renderCommandsList(state.lastCommandsRecords);
+      } catch (error) {
+        console.error('Error cargando comandos:', error);
+        alert('Error cargando comandos: ' + error.message);
+      }
+    }
+
+    async function loadBiodata() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          state.lastBiodataRecords = [];
+          resetPagination('biodata');
+          renderBlockedRecordsState('biodataList', biodataCountSummary, 'Mostrando 0 de 0 registros BIODATA.', 'No hay dispositivo activo para filtrar registros.');
+          biodataPagination.innerHTML = '';
+          return;
+        }
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/biodata', { includeSn: true }));
+        const biodata = await response.json();
+
+        if (!response.ok) throw new Error(biodata.error || `HTTP ${response.status}`);
+        state.lastBiodataRecords = Array.isArray(biodata) ? biodata : [];
+        resetPagination('biodata');
+        renderBiodataList(state.lastBiodataRecords);
+      } catch (error) {
+        console.error('Error cargando BIODATA:', error);
+        alert('Error cargando BIODATA: ' + error.message);
+      }
+    }
+
+    async function loadPhotos() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          state.lastPhotosRecords = [];
+          resetPagination('photos');
+          renderBlockedRecordsState('photosList', photosCountSummary, 'Mostrando 0 de 0 fotos.', 'No hay dispositivo activo para filtrar registros.');
+          photosPagination.innerHTML = '';
+          return;
+        }
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/photos', { includeSn: true }));
+        const photos = await response.json();
+
+        if (!response.ok) throw new Error(photos.error || `HTTP ${response.status}`);
+        state.lastPhotosRecords = Array.isArray(photos) ? photos : [];
+        resetPagination('photos');
+        renderPhotosList(state.lastPhotosRecords);
+      } catch (error) {
+        console.error('Error cargando fotos:', error);
+        alert('Error cargando fotos: ' + error.message);
+      }
+    }
+
+    async function loadAudit() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          state.lastAuditRecords = [];
+          resetPagination('audit');
+          renderBlockedRecordsState('auditList', auditCountSummary, 'Mostrando 0 de 0 auditorias.', 'No hay dispositivo activo para filtrar registros.');
+          auditPagination.innerHTML = '';
+          return;
+        }
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/records/delete-audit'));
+        const audit = await response.json();
+
+        if (!response.ok) throw new Error(audit.error || `HTTP ${response.status}`);
+        state.lastAuditRecords = Array.isArray(audit) ? audit : [];
+        resetPagination('audit');
+        renderAuditList(state.lastAuditRecords);
+      } catch (error) {
+        console.error('Error cargando auditoria:', error);
+        alert('Error cargando auditoria: ' + error.message);
+      }
+    }
+
+    async function loadPending() {
+      try {
+        updateRecordsScopeUi();
+        if (shouldBlockScopedRecordsView()) {
+          pendingList.innerHTML = '<p>No hay dispositivo activo para filtrar registros.</p>';
+          return;
+        }
+
+        const response = await fetch(buildScopedRecordsUrl('/adms/sync/pending', { includeSn: true }));
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+
+        const pendingCommands = Array.isArray(data.pendingCommands) ? data.pendingCommands : [];
+        const pendingPersons = Array.isArray(data.pendingPersons) ? data.pendingPersons : [];
+
+        if (pendingCommands.length === 0 && pendingPersons.length === 0) {
+          pendingList.innerHTML = '<p>No hay resultados para mostrar.</p>';
+          return;
+        }
+
+        pendingList.innerHTML = `
+          <div class="compact-card">
+            <div class="compact-card-line"><span class="summary-label">Pendientes</span><span>${pendingCommands.length} comandos / ${pendingPersons.length} personas</span></div>
+            <div class="compact-card-line muted">Alcance: ${escapeHtml(getRecordsScopeSummaryText())}</div>
+          </div>
+          ${pendingCommands.map(entry => `
+            <div class="compact-card">
+              <div class="compact-card-header">
+                <h4 class="compact-card-title">${escapeHtml(entry.commandType || 'UNKNOWN')} - PIN ${escapeHtml(entry.pin || 'N/A')}</h4>
+                <span class="badge badge-warning">${escapeHtml(entry.status || 'queued')}</span>
+              </div>
+              <div class="compact-card-line muted"><span>SN: ${escapeHtml(entry.targetDeviceSn || entry.ackDeviceSn || entry.requestDeviceSn || 'N/A')}</span><span>Sede: ${escapeHtml(entry.siteId || 'N/A')}</span></div>
+              <div class="compact-card-line muted"><span>Creado: ${escapeHtml(entry.createdAt || 'N/A')}</span><span>Enviado: ${escapeHtml(entry.sentAt || 'N/A')}</span></div>
+            </div>
+          `).join('')}
+        `;
+      } catch (error) {
+        console.error('Error cargando pendientes:', error);
+        alert('Error cargando pendientes: ' + error.message);
+      }
+    }
+
+    async function fetchAdmsConfigSites() {
+      const response = await fetch(buildNoCacheUrl(`${getBaseUrl()}/adms/config/sites`), { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      return Array.isArray(data.sites) ? data.sites : [];
+    }
+
+    async function fetchAdmsConfigDevices() {
+      const siteIdQuery = state.siteContext?.siteId ? `?siteId=${encodeURIComponent(state.siteContext.siteId)}` : '';
+      const response = await fetch(buildNoCacheUrl(`${getBaseUrl()}/adms/config/devices${siteIdQuery}`), { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      return Array.isArray(data.devices) ? data.devices : [];
+    }
+
+    async function fetchSiteContext() {
+      const siteId = getSiteIdFromUrl();
+      const contextUrl = siteId
+        ? `${getBaseUrl()}/adms/config/context?siteId=${encodeURIComponent(siteId)}`
+        : `${getBaseUrl()}/adms/config/context`;
+      const response = await fetch(buildNoCacheUrl(contextUrl), { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      state.siteContext = data;
+      renderSelectedDevice();
+      renderAdmsDiagnostics();
+      applyAlmacenOperatorUi();
+      return data;
+    }
+
+    async function fetchPendingSummary() {
+      const response = await fetch(buildNoCacheUrl(`${getBaseUrl()}/adms/sync/pending`), { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      state.pendingSummary = data;
+      renderAdmsDiagnostics();
+      return data;
+    }
+
+    function renderAdmsDiagnostics() {
+      const devices = Array.isArray(state.lastDevices) ? state.lastDevices : [];
+      const siteContext = state.siteContext || {};
+      const allowed = Array.isArray(siteContext.allowedDeviceSns) ? siteContext.allowedDeviceSns : [];
+      const allowedSnSet = new Set(allowed.map(value => String(value || '').trim()).filter(Boolean));
+      const discoveredUnauthorized = devices.filter(device => device && device.discoveredOnly === true);
+      const siteDevices = devices.filter(device => {
+        const normalizedSn = String(device?.sn || '').trim();
+        return allowedSnSet.has(normalizedSn) && device?.enabled === true && device?.discoveredOnly !== true;
+      });
+      const onlineDevices = siteDevices.filter(device => String(device?.estado || '').toLowerCase() === 'online');
+      const offlineDevices = siteDevices.filter(device => String(device?.estado || '').toLowerCase() === 'offline');
+      const pendingCommands = Array.isArray(state.pendingSummary?.pendingCommands) ? state.pendingSummary.pendingCommands.length : null;
+      const pendingPersons = Array.isArray(state.pendingSummary?.pendingPersons) ? state.pendingSummary.pendingPersons.length : null;
+
+      admsDiagnosticSummary.innerHTML = `
+        <div class="compact-card">
+          <div class="compact-card-line"><span class="summary-label">Sede activa</span><span>${escapeHtml(siteContext.siteName || 'N/A')}</span></div>
+          <div class="compact-card-line"><span class="summary-label">Hostname</span><span>${escapeHtml(siteContext.hostname || 'N/A')}</span></div>
+          <div class="compact-card-line"><span class="summary-label">Modo</span><span>${escapeHtml(siteContext.matchedBy || 'N/A')}</span></div>
+          <div class="compact-card-line"><span class="summary-label">Permitidos</span><span>${allowed.length > 0 ? escapeHtml(allowed.join(', ')) : 'Ninguno'}</span></div>
+          <div class="compact-card-line">
+            <span class="badge badge-neutral">No autorizados: ${discoveredUnauthorized.length}</span>
+            <span class="badge badge-ok">Online sede: ${onlineDevices.length}</span>
+            <span class="badge badge-warning">Offline sede: ${offlineDevices.length}</span>
+          </div>
+          <div class="compact-card-line muted">Total pendientes: ${pendingCommands == null ? 'Sin cargar' : `${pendingCommands} comandos / ${pendingPersons || 0} personas`}</div>
+        </div>
+      `;
+    }
+
+    async function loadConfigAdms() {
+      try {
+        const [sites, devices] = await Promise.all([
+          fetchAdmsConfigSites(),
+          fetchAdmsConfigDevices()
+        ]);
+
+        state.sites = sites;
+        renderSelectedDevice();
+        renderTargetDeviceOptions(state.lastDevices || []);
+
+        configSitesList.innerHTML = '';
+        configDevicesList.innerHTML = '';
+
+        if (sites.length === 0) {
+          configSitesList.innerHTML = '<p>No hay sedes configuradas.</p>';
+        } else {
+          sites.forEach(site => {
+            const item = document.createElement('div');
+            item.className = 'compact-card';
+            const allowedHtml = (Array.isArray(site.allowedDeviceSns) ? site.allowedDeviceSns : [])
+              .map(sn => `<div class="actions-row"><span class="badge badge-neutral">${sn}</span><button class="btn-secondary" onclick="removeAllowedDeviceFromSite('${site.siteId}','${sn}')">Quitar</button></div>`)
+              .join('');
+            item.innerHTML = `
+              <div class="compact-card-header">
+                <h4 class="compact-card-title">${site.name} (${site.siteId})</h4>
+                <span class="${site.enabled !== false ? 'badge badge-ok' : 'badge badge-error'}">${site.enabled !== false ? 'enabled' : 'disabled'}</span>
+              </div>
+              <div class="compact-card-line muted"><span>Hostname: ${site.hostname || 'N/A'}</span></div>
+              <div class="compact-card-line"><span class="summary-label">allowedDeviceSns</span></div>
+              ${allowedHtml || '<p>Sin SN permitidos.</p>'}
+              <div class="actions">
+                <button class="btn-secondary" onclick="editAdmsSite('${site.siteId}')">Editar sede</button>
+                <button class="btn-secondary" onclick="addAllowedDeviceToSite('${site.siteId}')">Agregar SN permitido</button>
+              </div>
+            `;
+            configSitesList.appendChild(item);
+          });
+        }
+
+        if (devices.length === 0) {
+          configDevicesList.innerHTML = '<p>No hay dispositivos conocidos.</p>';
+        } else {
+          devices.forEach(device => {
+            const item = document.createElement('div');
+            item.className = 'compact-card';
+            item.innerHTML = `
+              <div class="compact-card-header">
+                <h4 class="compact-card-title">${device.deviceName || device.name || 'Sin nombre'} - ${device.sn}</h4>
+                <span class="${String(device.estado || '').toLowerCase() === 'online' ? 'badge badge-ok' : 'badge badge-warning'}">${device.estado || 'N/A'}</span>
+              </div>
+              <div class="compact-card-line muted"><span>Sede: ${device.siteId || 'N/A'}</span><span>Ubicacion: ${device.locationName || 'N/A'}</span></div>
+              <div class="compact-card-line">
+                <span class="${device.enabled !== false ? 'badge badge-ok' : 'badge badge-error'}">enabled: ${device.enabled !== false ? 'true' : 'false'}</span>
+                <span class="${device.discoveredOnly ? 'badge badge-warning' : 'badge badge-neutral'}">discoveredOnly: ${device.discoveredOnly ? 'true' : 'false'}</span>
+              </div>
+              <div class="compact-card-line muted"><span>Ultima conexion: ${device.ultima_conexion || device.lastSeenAt || 'N/A'}</span></div>
+              <div class="compact-card-line"><span class="${device.discoveredOnly ? 'badge badge-warning' : 'badge badge-ok'}">${device.discoveredOnly ? 'Descubierto, no autorizado' : 'Permitido'}</span></div>
+              <div class="actions">
+                <button class="btn-secondary" onclick="editAdmsDeviceConfig('${device.sn}')">Editar dispositivo</button>
+                ${device.discoveredOnly ? `<button class="btn-secondary" onclick="authorizeAdmsDevice('${device.sn}')">Autorizar en sede default</button>` : ''}
+              </div>
+            `;
+            configDevicesList.appendChild(item);
+          });
+        }
+      } catch (error) {
+        configSitesList.innerHTML = `<p>Error cargando sedes: ${error.message}</p>`;
+        configDevicesList.innerHTML = `<p>Error cargando dispositivos: ${error.message}</p>`;
+        renderAdmsDiagnostics();
+      }
+    }
+
+    window.editAdmsDeviceConfig = async function(sn) {
+      try {
+        const devices = await fetchAdmsConfigDevices();
+        const device = devices.find(item => String(item.sn || '') === String(sn)) || {};
+        const nextName = prompt(`Nombre para ${sn}:`, device.deviceName || device.name || '');
+        if (nextName === null) return;
+        const nextLocation = prompt(`Ubicacion para ${sn}:`, device.locationName || '');
+        if (nextLocation === null) return;
+        const nextSiteId = prompt(`siteId para ${sn}:`, device.siteId || 'default');
+        if (nextSiteId === null) return;
+        const nextEnabled = confirm(`Habilitar ${sn}?\nAceptar = true\nCancelar = false`);
+
+        const response = await fetch(`${getBaseUrl()}/adms/config/devices/${encodeURIComponent(sn)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: nextName,
+            deviceName: nextName,
+            locationName: nextLocation,
+            siteId: nextSiteId,
+            enabled: nextEnabled
+          })
+        });
+        const data = await response.json();
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+
+        await Promise.all([loadConfigAdms(), fetchDevices()]);
+        alert('Dispositivo actualizado.');
+      } catch (error) {
+        alert(`Error actualizando dispositivo: ${error.message}`);
+      }
+    };
+
+    window.addAllowedDeviceToSite = async function(siteId) {
+      const sn = prompt(`SN permitido para la sede ${siteId}:`);
+      if (!sn) return;
+      try {
+        const response = await fetch(`${getBaseUrl()}/adms/config/sites/${encodeURIComponent(siteId)}/allowed-devices`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sn: sn.trim() })
+        });
+        const data = await response.json();
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+        await Promise.all([loadConfigAdms(), fetchDevices()]);
+      } catch (error) {
+        alert(`Error agregando SN permitido: ${error.message}`);
+      }
+    };
+
+    window.editAdmsSite = async function(siteId) {
+      try {
+        const sites = await fetchAdmsConfigSites();
+        const site = sites.find(item => String(item.siteId || '') === String(siteId)) || {};
+        const nextName = prompt(`Nombre para la sede ${siteId}:`, site.name || '');
+        if (nextName === null) return;
+        const nextHostname = prompt(`Hostname para la sede ${siteId}:`, site.hostname || '');
+        if (nextHostname === null) return;
+        const nextEnabled = confirm(`Habilitar la sede ${siteId}?\nAceptar = true\nCancelar = false`);
+
+        const response = await fetch(`${getBaseUrl()}/adms/config/sites/${encodeURIComponent(siteId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: nextName.trim(),
+            hostname: nextHostname.trim(),
+            enabled: nextEnabled
+          })
+        });
+        const data = await response.json();
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+        await Promise.all([loadConfigAdms(), fetchSites()]);
+      } catch (error) {
+        alert(`Error actualizando sede: ${error.message}`);
+      }
+    };
+
+    async function createAdmsSite() {
+      try {
+        const siteId = prompt('siteId de la nueva sede:', '');
+        if (!siteId) return;
+        const name = prompt(`Nombre para la sede ${siteId}:`, '');
+        if (name === null) return;
+        const hostname = prompt(`Hostname para la sede ${siteId}:`, '');
+        if (hostname === null) return;
+
+        const response = await fetch(`${getBaseUrl()}/adms/config/sites/${encodeURIComponent(siteId.trim())}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name.trim(),
+            hostname: hostname.trim(),
+            enabled: true
+          })
+        });
+        const data = await response.json();
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+        await Promise.all([loadConfigAdms(), fetchSites()]);
+      } catch (error) {
+        alert(`Error creando sede: ${error.message}`);
+      }
+    }
+
+    window.removeAllowedDeviceFromSite = async function(siteId, sn) {
+      try {
+        const response = await fetch(`${getBaseUrl()}/adms/config/sites/${encodeURIComponent(siteId)}/allowed-devices/${encodeURIComponent(sn)}`, {
+          method: 'DELETE'
+        });
+        const data = await response.json();
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+        await Promise.all([loadConfigAdms(), fetchDevices()]);
+      } catch (error) {
+        alert(`Error quitando SN permitido: ${error.message}`);
+      }
+    };
+
+    window.authorizeAdmsDevice = async function(sn) {
+      try {
+        const response = await fetch(`${getBaseUrl()}/adms/config/sites/default/allowed-devices`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sn })
+        });
+        const data = await response.json();
+        if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+        await Promise.all([loadConfigAdms(), fetchDevices()]);
+      } catch (error) {
+        alert(`Error autorizando dispositivo: ${error.message}`);
+      }
+    };
+
+    async function cleanupTestPersons() {
+      const persons = Array.isArray(state.lastPersons) ? state.lastPersons : [];
+      const candidates = persons.filter(person => {
+        const pin = String(person?.pin || '').trim();
+        return pin
+          && !isDeletedPerson(person)
+          && !TEST_PERSON_EXCLUDED_PINS.has(pin)
+          && isTestUserCandidate(person);
+      });
+
+      if (candidates.length === 0) {
+        alert('No hay usuarios de prueba activos para limpiar.');
+        return;
+      }
+
+      const previewLines = candidates.map(person => `- ${person.pin} / ${person.name || 'Sin nombre'}`);
+      const confirmed = confirm(
+        `Se marcaran como eliminados ${candidates.length} usuarios de prueba.\n\n${previewLines.join('\n')}\n\nSolo local.\nNo se enviara borrado al dispositivo.\nNo se borraran asistencias.\nNo se borraran fotos.\nNo se borrara BIODATA.`
+      );
+
+      if (!confirmed) {
+        alert('Limpieza cancelada.');
+        return;
+      }
+
+      const result = {
+        deleted: [],
+        failed: [],
+        skipped: []
+      };
+
+      for (const person of candidates) {
+        const pin = String(person?.pin || '').trim();
+        if (!pin) {
+          result.skipped.push({ pin: '', name: person?.name || 'Sin nombre', reason: 'PIN vacio' });
+          continue;
+        }
+
+        try {
+          const response = await fetch(`${getBaseUrl()}/adms/records/delete-person`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pin,
+              scope: 'local',
+              confirmation: `BORRAR PIN ${pin}`,
+              deleteAttendance: false,
+              deletePhoto: false,
+              deleteBiodata: false,
+              reason: 'Limpieza segura de usuarios de prueba desde panel'
+            })
+          });
+          const body = await response.json();
+
+          if (!response.ok || body.ok === false) {
+            result.failed.push({ pin, name: person?.name || 'Sin nombre', reason: body.error || `HTTP ${response.status}` });
+            continue;
+          }
+
+          result.deleted.push({ pin, name: person?.name || 'Sin nombre' });
+        } catch (error) {
+          result.failed.push({ pin, name: person?.name || 'Sin nombre', reason: error.message });
+        }
+      }
+
+      alert(
+        `Limpieza finalizada.\n\nEliminados: ${result.deleted.length}\nFallidos: ${result.failed.length}\nOmitidos: ${result.skipped.length}`
+      );
+
+      await loadPersons();
+      if (typeof loadOverview === 'function') {
+        await loadOverview().catch(() => {});
+      }
+      if (typeof loadAudit === 'function') {
+        await loadAudit().catch(() => {});
+      }
+    }
+
+    async function loadDeleteAudit() {
+      return loadAudit();
+    }
+
+    // Event listeners para los botones
+    document.getElementById('refreshOverview').addEventListener('click', loadOverview);
+    document.getElementById('loadPersons').addEventListener('click', loadPersons);
+    document.getElementById('loadAttendance').addEventListener('click', loadAttendanceRecords);
+    document.getElementById('loadDevices').addEventListener('click', loadDevices);
+    document.getElementById('loadCommands').addEventListener('click', loadCommands);
+    document.getElementById('loadPending').addEventListener('click', loadPending);
+    document.getElementById('loadBiodata').addEventListener('click', loadBiodata);
+    document.getElementById('loadPhotos').addEventListener('click', loadPhotos);
+    document.getElementById('loadAudit').addEventListener('click', loadAudit);
+    document.getElementById('loadConfigAdms').addEventListener('click', loadConfigAdms);
+    createSiteButton.addEventListener('click', createAdmsSite);
+    cleanupTestPersonsButton.addEventListener('click', cleanupTestPersons);
+    toggleTechnicalDetailsButton.addEventListener('click', toggleTechnicalDetails);
+    auditPinFilter.addEventListener('input', () => { resetPagination('audit'); renderAuditList(state.lastAuditRecords); });
+    auditScopeFilter.addEventListener('change', () => { resetPagination('audit'); renderAuditList(state.lastAuditRecords); });
+    auditRemoteStatusFilter.addEventListener('change', () => { resetPagination('audit'); renderAuditList(state.lastAuditRecords); });
+    auditOverallStatusFilter.addEventListener('change', () => { resetPagination('audit'); renderAuditList(state.lastAuditRecords); });
+    auditReasonFilter.addEventListener('input', () => { resetPagination('audit'); renderAuditList(state.lastAuditRecords); });
+    auditOnlyWithDevice.addEventListener('change', () => { resetPagination('audit'); renderAuditList(state.lastAuditRecords); });
+    loadAdmsDiagnosticPendingButton.addEventListener('click', () => {
+      fetchPendingSummary().catch(error => {
+        admsDiagnosticSummary.innerHTML = `<p>Error cargando diagnostico ADMS: ${escapeHtml(error.message)}</p>`;
+      });
+    });
+    personsStatusFilter.addEventListener('change', () => { resetPagination('persons'); renderPersonsList(state.lastPersons); });
+    personsTypeFilter.addEventListener('change', () => { resetPagination('persons'); renderPersonsList(state.lastPersons); });
+    personsSearchInput.addEventListener('input', () => { resetPagination('persons'); renderPersonsList(state.lastPersons); });
+    hideDeletedPersons.addEventListener('change', () => { resetPagination('persons'); renderPersonsList(state.lastPersons); });
+    document.getElementById('recordsAttendancePin').addEventListener('input', () => resetPagination('attendance'));
+    document.getElementById('recordsAttendanceFrom').addEventListener('change', () => resetPagination('attendance'));
+    document.getElementById('recordsAttendanceTo').addEventListener('change', () => resetPagination('attendance'));
+    document.getElementById('commandsPin').addEventListener('input', () => resetPagination('commands'));
+    document.getElementById('commandsType').addEventListener('change', () => resetPagination('commands'));
+    document.getElementById('commandsStatus').addEventListener('change', () => resetPagination('commands'));
+
+    window.addEventListener('load', () => {
+      baseUrlInput.value = window.location.protocol === 'file:' ? DEFAULT_BASE_URL : window.location.origin;
+      state.recordsScopeMode = recordsScopeMode?.value === 'all' ? 'all' : 'device';
+      setDefaultDates();
+      renderModeUI();
+      setInitialStates();
+      applyAlmacenOperatorUi();
+      updateRecordsScopeUi();
+      syncTechnicalDetailsToggle();
+      setJsonOutput(enrollJsonOutput, null);
+      setJsonOutput(commandStatusOutput, null);
+      setJsonOutput(attendanceOutput, null);
+      checkHealth();
+      fetchSiteContext()
+        .catch(() => { state.siteContext = null; renderSelectedDevice(); })
+        .finally(() => {
+          fetchDevices()
+            .then(devices => updateDeviceStatus(devices))
+            .catch(error => setText(estadoDispositivo, `No fue posible consultar dispositivos: ${error.message}`));
+        });
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,159 @@
+{
+  "info": {
+    "name": "ADMS Admin API",
+    "_postman_id": "2e6ca201-73e8-4b8e-a862-4e72fa50d4d5",
+    "description": "Coleccion interna para administracion multi-entidad en Fase 1.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "adminApiKey", "value": "admin-cambia-esta-clave" },
+    { "key": "entityId", "value": "1" },
+    { "key": "siteId", "value": "1" },
+    { "key": "deviceId", "value": "1" },
+    { "key": "apiClientId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "List Entities",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-Key", "value": "{{adminApiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/entities",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admin", "entities"]
+        }
+      }
+    },
+    {
+      "name": "Create Entity",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-Key", "value": "{{adminApiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Entidad Demo\",\n  \"codigo\": \"demo\",\n  \"enabled\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/entities",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admin", "entities"]
+        }
+      }
+    },
+    {
+      "name": "List Sites",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-Key", "value": "{{adminApiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/sites?entidad_id={{entityId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admin", "sites"],
+          "query": [
+            { "key": "entidad_id", "value": "{{entityId}}" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Site",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-Key", "value": "{{adminApiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"entidad_id\": {{entityId}},\n  \"nombre\": \"Sede Demo\",\n  \"codigo\": \"demo-site\",\n  \"timezone\": \"America/Bogota\",\n  \"enabled\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/sites",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admin", "sites"]
+        }
+      }
+    },
+    {
+      "name": "List Devices",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-Key", "value": "{{adminApiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/devices?entidad_id={{entityId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admin", "devices"],
+          "query": [
+            { "key": "entidad_id", "value": "{{entityId}}" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create Device",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-Key", "value": "{{adminApiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"entidad_id\": {{entityId}},\n  \"sede_id\": {{siteId}},\n  \"numero_serie\": \"SN-DEMO-001\",\n  \"nombre\": \"Reloj Demo\",\n  \"tipo_conexion\": \"adms\",\n  \"enabled\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/devices",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admin", "devices"]
+        }
+      }
+    },
+    {
+      "name": "List API Clients",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-Key", "value": "{{adminApiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/api-clients?entidad_id={{entityId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admin", "api-clients"],
+          "query": [
+            { "key": "entidad_id", "value": "{{entityId}}" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Create API Client",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-Key", "value": "{{adminApiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"entidad_id\": {{entityId}},\n  \"nombre\": \"Cliente Demo\",\n  \"enabled\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/admin/api-clients",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "admin", "api-clients"]
+        }
+      }
+    }
+  ]
+}

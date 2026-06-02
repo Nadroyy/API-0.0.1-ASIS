@@ -1,0 +1,203 @@
+{
+  "info": {
+    "name": "ADMS API v2",
+    "_postman_id": "6a8669b8-2cd8-4f7c-bf8a-4cdf9c1f3ad2",
+    "description": "Coleccion base para CRUD publico de personas por NUIP y sincronizacion ADMS opcional. En v2, el NUIP también se usa como PIN técnico del reloj.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "adminApiKey", "value": "admin-cambia-esta-clave" },
+    { "key": "clientApiKey", "value": "cliente-cambia-esta-clave" },
+    { "key": "nuip", "value": "123456789" },
+    { "key": "name", "value": "Juan Perez" },
+    { "key": "password", "value": "1234567" },
+    { "key": "siteId", "value": "default" },
+    { "key": "targetDeviceSn", "value": "UDP3253500049" }
+  ],
+  "item": [
+    {
+      "name": "List Persons",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-Key", "value": "{{clientApiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/persons",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v2", "persons"]
+        }
+      }
+      },
+      {
+        "name": "List Persons (active)",
+        "request": {
+          "method": "GET",
+          "header": [
+            { "key": "X-API-Key", "value": "{{clientApiKey}}" }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/api/v2/persons?status=activo",
+            "host": ["{{baseUrl}}"],
+            "path": ["api", "v2", "persons"],
+            "query": [
+              { "key": "status", "value": "activo" }
+            ]
+          }
+        }
+      },
+      {
+        "name": "List Persons (inactive)",
+        "request": {
+          "method": "GET",
+          "header": [
+            { "key": "X-API-Key", "value": "{{clientApiKey}}" }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/api/v2/persons?status=inactivo",
+            "host": ["{{baseUrl}}"],
+            "path": ["api", "v2", "persons"],
+            "query": [
+              { "key": "status", "value": "inactivo" }
+            ]
+          }
+        }
+      },
+      {
+        "name": "List Persons (all)",
+        "request": {
+          "method": "GET",
+          "header": [
+            { "key": "X-API-Key", "value": "{{clientApiKey}}" }
+          ],
+          "url": {
+            "raw": "{{baseUrl}}/api/v2/persons?status=all",
+            "host": ["{{baseUrl}}"],
+            "path": ["api", "v2", "persons"],
+            "query": [
+              { "key": "status", "value": "all" }
+            ]
+          }
+        }
+      },
+    {
+      "name": "Create Person",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-API-Key", "value": "{{clientApiKey}}" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "nuip", "value": "{{nuip}}", "type": "text" },
+            { "key": "name", "value": "{{name}}", "type": "text" },
+            { "key": "password", "value": "{{password}}", "type": "text", "disabled": true },
+            { "key": "siteId", "value": "{{siteId}}", "type": "text", "disabled": true },
+            { "key": "targetDeviceSn", "value": "{{targetDeviceSn}}", "type": "text", "disabled": true },
+            
+            { "key": "syncDevice", "value": "true", "type": "text", "disabled": true },
+            { "key": "image", "type": "file", "src": "", "disabled": true }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/persons",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v2", "persons"]
+        }
+      }
+    },
+    {
+      "name": "Get Person",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-Key", "value": "{{clientApiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/persons/{{nuip}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v2", "persons", "{{nuip}}"]
+        }
+      }
+    },
+    {
+      "name": "Update Person",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "X-API-Key", "value": "{{clientApiKey}}" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "name", "value": "{{name}}", "type": "text", "disabled": true },
+            { "key": "password", "value": "{{password}}", "type": "text", "disabled": true },
+            { "key": "siteId", "value": "{{siteId}}", "type": "text", "disabled": true },
+            { "key": "targetDeviceSn", "value": "{{targetDeviceSn}}", "type": "text", "disabled": true },
+            
+            { "key": "syncDevice", "value": "true", "type": "text", "disabled": true },
+            { "key": "image", "type": "file", "src": "", "disabled": true }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/persons/{{nuip}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v2", "persons", "{{nuip}}"]
+        }
+      }
+    },
+    {
+      "name": "Delete Person",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "X-API-Key", "value": "{{clientApiKey}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"siteId\": \"{{siteId}}\",\n  \"targetDeviceSn\": \"{{targetDeviceSn}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/persons/{{nuip}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v2", "persons", "{{nuip}}"]
+        }
+      }
+    },
+    {
+      "name": "Get Attendance",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-Key", "value": "{{clientApiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/attendance?nuip={{nuip}}&limit=100",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v2", "attendance"],
+          "query": [
+            { "key": "nuip", "value": "{{nuip}}" },
+            { "key": "limit", "value": "100" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Command",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "X-API-Key", "value": "{{clientApiKey}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v2/commands/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v2", "commands", "1"]
+        }
+      }
+    }
+  ]
+}
