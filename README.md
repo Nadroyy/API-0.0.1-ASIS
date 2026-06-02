@@ -115,10 +115,8 @@ Rutas ADMS como `/iclock/cdata` y `/iclock/devicecmd` son callbacks tecnicos par
 ## Documentacion
 
 - `docs/CLIENTE_FINAL.md`: guia segura para consumidores de la API v2.
-- `docs/api-postman.md`: notas operativas historicas de API/Postman.
-- `docs/adms-multisede-operacion.md`: documentacion legacy/interna de operacion multisede.
-- `docs/zk-postman.md`: documentacion legacy/opcional de pruebas TCP ZKTeco.
-- `docs/almacenamiento-adms.md`: notas de almacenamiento y auditoria ADMS.
+- `docs/postman/ADMS API v2.postman_collection.json`: coleccion Postman para cliente final.
+- `docs/postman/ADMS Admin API.postman_collection.json`: coleccion Postman administrativa.
 
 ## Postman
 
