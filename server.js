@@ -3862,7 +3862,7 @@ function toBooleanFlag(value) {
     return text === '1' || text === 'true' || text === 'yes';
 }
 
-// API authentication functions moved to src/apiKeyAuth.js
+// API authentication functions moved to src/middleware/apiKeyAuth.js
 // - safeEqualsApiKey
 // - extractApiV1KeyFromRequest
 // - requireApiV1Key
