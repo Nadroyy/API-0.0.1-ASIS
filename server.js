@@ -2122,6 +2122,57 @@ function readAdmsCommandStatus(commandId) {
     };
 }
 
+async function readMysqlAdmsCommandStatus(commandId) {
+    const id = normalizeUnsignedBigIntText(commandId);
+    if (!id) {
+        return null;
+    }
+
+    const [rows] = await db.query(`
+        SELECT
+            id,
+            command_type,
+            pin_dispositivo,
+            status,
+            return_code,
+            target_device_sn,
+            request_device_sn,
+            ack_device_sn,
+            sent_at,
+            acknowledged_at,
+            raw_result,
+            error,
+            created_at,
+            updated_at
+        FROM adms_commands
+        WHERE id = ?
+        LIMIT 1
+    `, [id]);
+
+    const row = Array.isArray(rows) && rows[0] ? rows[0] : null;
+    if (!row) {
+        return null;
+    }
+
+    return {
+        commandId: String(row.id),
+        commandType: row.command_type || null,
+        pin: row.pin_dispositivo || null,
+        status: row.status || null,
+        returnCode: row.return_code ?? null,
+        targetDeviceSn: row.target_device_sn || null,
+        requestDeviceSn: row.request_device_sn || null,
+        ackDeviceSn: row.ack_device_sn || null,
+        sentAt: row.sent_at || null,
+        acknowledgedAt: row.acknowledged_at || null,
+        rawResult: row.raw_result || null,
+        error: row.error || null,
+        createdAt: row.created_at || null,
+        updatedAt: row.updated_at || null,
+        source: 'mysql'
+    };
+}
+
 function updateAdmsCommandQueueEntry(commandId, updates) {
     const queue = readAdmsCommandQueue();
     let found = false;
@@ -8126,22 +8177,44 @@ app.delete('/api/v2/persons/:nuip', asyncHandler(async (req, res) => {
 app.get('/api/v2/commands/:id', asyncHandler(async (req, res) => {
     const filters = getRecordsScopeFilters(req);
     const scopedEntidadId = resolveApiScopedEntidadId(req);
-    const command = buildAdmsCommandsReadModel(filters, {
+
+    const respondWithCommand = async command => {
+        if (!command) {
+            return false;
+        }
+
+        if (scopedEntidadId) {
+            const entityDeviceSerials = await readEntityDeviceSerials(scopedEntidadId);
+            if (!commandBelongsToEntity(command, entityDeviceSerials)) {
+                return false;
+            }
+        }
+
+        res.json({ ok: true, command: toPublicCommand(command) });
+        return true;
+    };
+
+    try {
+        const mysqlCommand = await readMysqlAdmsCommandStatus(req.params.id);
+        if (await respondWithCommand(mysqlCommand)) {
+            return;
+        }
+    } catch (error) {
+        logStore.warn('adms.command.mysql-read.error', {
+            commandId: String(req.params.id || ''),
+            error: error.message
+        });
+    }
+
+    const legacyCommand = buildAdmsCommandsReadModel(filters, {
         commandId: req.params.id
     })[0] || null;
 
-    if (!command) {
-        return res.status(404).json({ ok: false, error: 'Comando no encontrado' });
+    if (await respondWithCommand(legacyCommand)) {
+        return;
     }
 
-    if (scopedEntidadId) {
-        const entityDeviceSerials = await readEntityDeviceSerials(scopedEntidadId);
-        if (!commandBelongsToEntity(command, entityDeviceSerials)) {
-            return res.status(404).json({ ok: false, error: 'Comando no encontrado' });
-        }
-    }
-
-    res.json({ ok: true, command: toPublicCommand(command) });
+    res.status(404).json({ ok: false, error: 'Comando no encontrado' });
 }));
 
 app.get('/api/v2/attendance', asyncHandler(async (req, res) => {
