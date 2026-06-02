@@ -437,6 +437,21 @@ app.all('/iclock/devicecmd', asyncHandler(async (req, res) => {
     sendPlainText(res, 'OK');
 }));
 
+function isInternalAdmsToolsEnabled() {
+    return String(process.env.ENABLE_INTERNAL_ADMS_TOOLS || '').toLowerCase() === 'true';
+}
+
+function requireInternalAdmsToolsEnabled(req, res, next) {
+    if (isInternalAdmsToolsEnabled()) return next();
+    return res.status(404).json({
+        ok: false,
+        message: 'Herramientas internas ADMS deshabilitadas',
+        code: 'ADMS_INTERNAL_TOOLS_DISABLED'
+    });
+}
+
+app.use('/adms', requireInternalAdmsToolsEnabled);
+
 app.post('/adms/queue-user', asyncHandler(async (req, res) => {
     const pin = normalizePin(req.body.pin);
     const rawName = typeof req.body.name === 'string' ? req.body.name : '';
@@ -1077,7 +1092,7 @@ app.get('/health', (_req, res) => {
     });
 });
 
-app.get('/panel', (_req, res) => {
+app.get('/panel', requireInternalAdmsToolsEnabled, (_req, res) => {
     res.sendFile(path.join(publicDir, 'adms-panel.html'));
 });
 
@@ -1190,8 +1205,8 @@ app.get('/zk/logs', (req, res) => {
     });
 });
 
-app.use('/faces', express.static(facesUploadsDir));
-app.use('/uploads', express.static(uploadsDir));
+app.use('/faces', requireInternalAdmsToolsEnabled, express.static(facesUploadsDir));
+app.use('/uploads', requireInternalAdmsToolsEnabled, express.static(uploadsDir));
 
 function ensureDirectory(directoryPath) {
     if (!fs.existsSync(directoryPath)) {
