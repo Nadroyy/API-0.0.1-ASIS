@@ -1,5 +1,7 @@
 # API REST v1 para Postman
 
+> Nota de mantenimiento: este documento conserva ejemplos historicos e internos de operacion. Para el contrato profesional de cliente final del MVP usa `docs/CLIENTE_FINAL.md`.
+
 ## Llaves por rol
 
 - `ADMIN_API_KEY`: llave oficial para `/api/v1/*` y tambien valida `/api/v2/*`
@@ -57,7 +59,7 @@ Variables sugeridas para Postman:
 
 Base sugerida:
 
-- `baseUrl = http://192.168.2.98:3000`
+- `baseUrl = {{baseUrl}}`
 - `apiKey = cambia-esta-clave`
 - `siteId = almacen`
 - `targetDeviceSn = CNYG225160781`

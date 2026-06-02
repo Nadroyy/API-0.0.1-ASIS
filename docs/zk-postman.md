@@ -1,9 +1,11 @@
 # Endpoints ZKTeco TCP
 
+> Nota legacy/opcional: el flujo principal del MVP cliente es ADMS Push. Estos ejemplos TCP se conservan solo como referencia tecnica de pruebas locales.
+
 ## Variables sugeridas en Postman
 
 - `baseUrl`: `http://localhost:3000`
-- `zkIp`: `192.168.1.201`
+- `zkIp`: `{{zkIp}}`
 
 ## Probar conectividad TCP
 
@@ -15,7 +17,7 @@ Respuesta esperada:
 {
   "ok": true,
   "type": "tcp",
-  "ip": "192.168.1.201",
+  "ip": "{{zkIp}}",
   "port": 4370,
   "responseTimeMs": 16.73,
   "timestamp": "2026-04-20T18:00:00.000Z",
@@ -41,7 +43,7 @@ Respuesta esperada:
 
 ```json
 {
-  "ip": "192.168.1.201",
+  "ip": "{{zkIp}}",
   "uid": "10",
   "userId": "10",
   "name": "Juan Perez",
@@ -56,7 +58,7 @@ Respuesta esperada:
 
 ```json
 {
-  "ip": "192.168.1.201",
+  "ip": "{{zkIp}}",
   "uid": "10",
   "userId": "10",
   "name": "Juan Perez Actualizado",

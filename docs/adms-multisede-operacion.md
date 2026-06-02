@@ -1,5 +1,7 @@
 # ADMS multisede: operacion
 
+> Nota legacy: este documento conserva contexto operativo interno de una etapa multisede. No es el contrato publico del cliente final del MVP.
+
 ## 1. Estado actual del sistema
 
 - El servidor ADMS esta estable y funcionando en modo multisede basico.
@@ -47,7 +49,7 @@ Desde panel:
 
 ```bash
 curl -H "Host: almacen.local" http://localhost:3000/adms/config/context
-curl -H "Host: 192.168.2.97" http://localhost:3000/adms/config/context
+curl -H "Host: adms-site.example.local" http://localhost:3000/adms/config/context
 ```
 
 ## 7. Como agregar un dispositivo nuevo
