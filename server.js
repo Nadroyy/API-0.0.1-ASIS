@@ -1897,6 +1897,185 @@ function updateDeleteAuditForDeviceCommand(commandId, updates) {
 
 function appendAdmsCommandQueueEntry(entry) {
     appendJsonLine(admsCommandQueuePath, entry);
+    void insertMysqlAdmsCommand(entry);
+}
+
+async function insertMysqlAdmsCommand(entry) {
+    try {
+        const commandId = normalizeUnsignedBigIntText(entry?.commandId);
+        if (!commandId) {
+            logStore.warn('adms.command.mysql-insert.skipped', {
+                reason: 'invalid-command-id',
+                commandId: entry?.commandId || null
+            });
+            return;
+        }
+
+        const references = await resolveMysqlAdmsCommandReferences(entry);
+        const commandType = String(entry.commandType || inferAdmsCommandType(entry.command)).trim() || 'UNKNOWN';
+        const targetDeviceSn = normalizeRecordsScopeValue(entry.targetDeviceSn || resolveQueueEntryTargetDeviceSn(entry)) || null;
+        const status = normalizeAdmsCommandStatusForMysql(entry.status);
+
+        await db.query(`
+            INSERT INTO adms_commands (
+                id,
+                entidad_id,
+                dispositivo_id,
+                persona_id,
+                pin_dispositivo,
+                command_type,
+                command_text,
+                purpose,
+                status,
+                return_code,
+                sent_at,
+                acknowledged_at,
+                ack_device_sn,
+                request_device_sn,
+                target_device_sn,
+                raw_result,
+                error,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                entidad_id = VALUES(entidad_id),
+                dispositivo_id = VALUES(dispositivo_id),
+                persona_id = VALUES(persona_id),
+                pin_dispositivo = VALUES(pin_dispositivo),
+                command_type = VALUES(command_type),
+                command_text = VALUES(command_text),
+                purpose = VALUES(purpose),
+                status = VALUES(status),
+                return_code = VALUES(return_code),
+                sent_at = VALUES(sent_at),
+                acknowledged_at = VALUES(acknowledged_at),
+                ack_device_sn = VALUES(ack_device_sn),
+                request_device_sn = VALUES(request_device_sn),
+                target_device_sn = VALUES(target_device_sn),
+                raw_result = VALUES(raw_result),
+                error = VALUES(error)
+        `, [
+            commandId,
+            references.entidadId,
+            references.dispositivoId,
+            references.personaId,
+            normalizePin(entry.pin) || null,
+            commandType,
+            String(entry.command || ''),
+            normalizeRecordsScopeValue(entry.purpose) || null,
+            status,
+            entry.returnCode == null ? null : String(entry.returnCode),
+            toMysqlDateOrNull(entry.sentAt),
+            toMysqlDateOrNull(entry.acknowledgedAt),
+            normalizeRecordsScopeValue(entry.ackDeviceSn) || null,
+            normalizeRecordsScopeValue(entry.requestDeviceSn) || null,
+            targetDeviceSn,
+            entry.rawLine == null ? null : String(entry.rawLine),
+            entry.error == null ? null : String(entry.error),
+            toMysqlDateOrNull(entry.createdAt) || new Date()
+        ]);
+    } catch (error) {
+        logStore.error('adms.command.mysql-insert.error', {
+            commandId: entry?.commandId || null,
+            commandType: entry?.commandType || null,
+            targetDeviceSn: entry?.targetDeviceSn || null,
+            error: error.message
+        });
+    }
+}
+
+async function resolveMysqlAdmsCommandReferences(entry = {}) {
+    const pin = normalizePin(entry.pin);
+    const targetDeviceSn = normalizeRecordsScopeValue(entry.targetDeviceSn || resolveQueueEntryTargetDeviceSn(entry));
+    let dispositivoId = normalizePositiveIntegerId(entry.dispositivo_id || entry.deviceId);
+    let entidadId = normalizePositiveIntegerId(entry.entidad_id || entry.entidadId || entry.entityId);
+    let personaId = normalizePositiveIntegerId(entry.persona_id || entry.personId);
+
+    if ((!dispositivoId || !entidadId) && targetDeviceSn) {
+        const device = await readMysqlDeviceBySerial(targetDeviceSn);
+        dispositivoId = dispositivoId || normalizePositiveIntegerId(device?.id);
+        entidadId = entidadId || normalizePositiveIntegerId(device?.entidad_id);
+    }
+
+    if (!personaId && pin) {
+        personaId = await resolveMysqlPersonaIdForCommand({
+            pin,
+            dispositivoId,
+            entidadId
+        });
+    }
+
+    return {
+        entidadId,
+        dispositivoId,
+        personaId
+    };
+}
+
+async function resolveMysqlPersonaIdForCommand({ pin, dispositivoId = null, entidadId = null }) {
+    try {
+        const clauses = ['pd.pin_dispositivo = ?'];
+        const params = [pin];
+
+        if (dispositivoId) {
+            clauses.push('pd.dispositivo_id = ?');
+            params.push(dispositivoId);
+        }
+
+        if (entidadId) {
+            clauses.push('p.entidad_id = ?');
+            params.push(entidadId);
+        }
+
+        const [rows] = await db.query(`
+            SELECT p.id
+            FROM persona_dispositivos pd
+            INNER JOIN personas p ON p.id = pd.persona_id
+            WHERE ${clauses.join(' AND ')}
+            ORDER BY pd.updated_at DESC, pd.id DESC
+            LIMIT 1
+        `, params);
+
+        return normalizePositiveIntegerId(Array.isArray(rows) && rows[0] ? rows[0].id : null);
+    } catch (error) {
+        logStore.warn('adms.command.mysql-reference.skipped', {
+            pin,
+            dispositivoId,
+            entidadId,
+            error: error.message
+        });
+        return null;
+    }
+}
+
+function normalizeUnsignedBigIntText(value) {
+    const raw = String(value || '').trim();
+    if (!/^\d+$/.test(raw)) {
+        return null;
+    }
+
+    try {
+        const parsed = BigInt(raw);
+        return parsed > 0n && parsed <= 18446744073709551615n ? raw : null;
+    } catch (_error) {
+        return null;
+    }
+}
+
+function normalizeAdmsCommandStatusForMysql(value) {
+    const status = String(value || '').trim();
+    const allowedStatuses = new Set(['queued', 'retry_pending', 'sent_waiting_ack', 'accepted', 'failed']);
+    return allowedStatuses.has(status) ? status : 'queued';
+}
+
+function toMysqlDateOrNull(value) {
+    if (!value) {
+        return null;
+    }
+
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function refreshPendingCommandsMemory() {
