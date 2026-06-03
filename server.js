@@ -286,6 +286,20 @@ app.all('/iclock/getrequest', asyncHandler(async (req, res) => {
         updateAdmsDevice(sn, req.ip, req.originalUrl, req.method, req.get('User-Agent'));
     }
 
+    if (isMysqlCommandDispatchEnabled()) {
+        try {
+            const mysqlCommands = await flushPendingMysqlCommands(sn);
+            if (mysqlCommands) {
+                return sendPlainText(res, mysqlCommands);
+            }
+        } catch (error) {
+            logStore.error('adms.command.mysql-dispatch.error', {
+                sn: sn || null,
+                error: error.message
+            });
+        }
+    }
+
     sendPlainText(res, flushPendingCommands(sn));
 }));
 
@@ -5681,6 +5695,70 @@ function getRawIclockBody(req) {
 function sendPlainText(res, body) {
     res.type('text/plain');
     res.send(body);
+}
+
+function isMysqlCommandDispatchEnabled() {
+    return String(process.env.ENABLE_MYSQL_COMMAND_DISPATCH || '').toLowerCase() === 'true';
+}
+
+async function flushPendingMysqlCommands(deviceSn = '') {
+    const normalizedDeviceSn = String(deviceSn || '').trim() || DEFAULT_TARGET_DEVICE_SN;
+    const limit = 5;
+    const connection = await db.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const [rows] = await connection.query(`
+            SELECT id, command_text
+            FROM adms_commands
+            WHERE target_device_sn = ?
+              AND status IN ('queued', 'retry_pending')
+            ORDER BY id ASC
+            LIMIT ?
+            FOR UPDATE
+        `, [normalizedDeviceSn, limit]);
+
+        const commands = Array.isArray(rows) ? rows : [];
+        if (commands.length === 0) {
+            await connection.commit();
+            return '';
+        }
+
+        const ids = commands.map(command => command.id);
+        const placeholders = ids.map(() => '?').join(', ');
+        await connection.query(`
+            UPDATE adms_commands
+            SET status = 'sent_waiting_ack',
+                sent_at = CURRENT_TIMESTAMP,
+                request_device_sn = ?,
+                request_attempts = request_attempts + 1,
+                locked_at = NULL
+            WHERE id IN (${placeholders})
+        `, [normalizedDeviceSn, ...ids]);
+
+        await connection.commit();
+
+        const response = commands.map(command => String(command.command_text || '')).join('\r\n');
+        logStore.info('adms.commands.mysql-flushed', {
+            total: commands.length,
+            requestDeviceSn: normalizedDeviceSn,
+            commandIds: ids.map(id => String(id))
+        });
+        return response;
+    } catch (error) {
+        try {
+            await connection.rollback();
+        } catch (rollbackError) {
+            logStore.warn('adms.command.mysql-dispatch.rollback-error', {
+                requestDeviceSn: normalizedDeviceSn,
+                error: rollbackError.message
+            });
+        }
+        throw error;
+    } finally {
+        connection.release();
+    }
 }
 
 function flushPendingCommands(deviceSn = '') {
