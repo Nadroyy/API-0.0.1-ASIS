@@ -4379,8 +4379,8 @@ async function resolveDeviceProfileCommandStatuses(commandRefs = []) {
                 commandType: String(commandType || ''),
                 status,
                 acceptedByDevice: status === 'accepted',
-                targetDeviceSn: entry?.targetDeviceSn || null,
-                siteId: entry?.siteId || null
+                targetDeviceSn: entry?.targetDeviceSn || (commandRefs[index] && commandRefs[index].fallbackDeviceSerial) || null,
+                siteId: entry?.siteId || (commandRefs[index] && commandRefs[index].fallbackSiteId) || null
             };
         });
 }
@@ -5117,11 +5117,13 @@ async function performApiDeviceProfileUpdate({ nuip, body, file }) {
         });
         userinfoResult = {
             commandId: photoResult.userCommandId,
-            commandType: 'USERINFO'
+            commandType: 'USERINFO',
+            fallbackDeviceSerial: targetContext.targetDeviceSn
         };
         commandRefs.push(userinfoResult, {
             commandId: photoResult.biophotoCommandId,
-            commandType: 'BIOPHOTO'
+            commandType: 'BIOPHOTO',
+            fallbackDeviceSerial: targetContext.targetDeviceSn
         });
     } else {
         if (needsUserinfo) {
@@ -5134,7 +5136,8 @@ async function performApiDeviceProfileUpdate({ nuip, body, file }) {
             });
             userinfoResult = {
                 commandId: userCommand.commandId,
-                commandType: 'USERINFO'
+                commandType: 'USERINFO',
+                fallbackDeviceSerial: targetContext.targetDeviceSn
             };
             commandRefs.push(userinfoResult);
         }
@@ -5152,6 +5155,7 @@ async function performApiDeviceProfileUpdate({ nuip, body, file }) {
                 commandId: photoResult.biophotoCommandId,
                 commandType: 'BIOPHOTO'
             });
+            commandRefs[commandRefs.length - 1].fallbackDeviceSerial = targetContext.targetDeviceSn;
         }
     }
 
@@ -5327,11 +5331,13 @@ async function performMysqlPersonPatchWithOptionalDeviceSync({ nuip, body, file,
         });
         userinfoResult = {
             commandId: photoResult.userCommandId,
-            commandType: 'USERINFO'
+            commandType: 'USERINFO',
+            fallbackDeviceSerial: targetContext.targetDeviceSn
         };
         commandRefs.push(userinfoResult, {
             commandId: photoResult.biophotoCommandId,
-            commandType: 'BIOPHOTO'
+            commandType: 'BIOPHOTO',
+            fallbackDeviceSerial: targetContext.targetDeviceSn
         });
     } else {
         if (needsUserinfo) {
@@ -5344,7 +5350,8 @@ async function performMysqlPersonPatchWithOptionalDeviceSync({ nuip, body, file,
             });
             userinfoResult = {
                 commandId: userCommand.commandId,
-                commandType: 'USERINFO'
+                commandType: 'USERINFO',
+                fallbackDeviceSerial: targetContext.targetDeviceSn
             };
             commandRefs.push(userinfoResult);
         }
@@ -5362,6 +5369,7 @@ async function performMysqlPersonPatchWithOptionalDeviceSync({ nuip, body, file,
                 commandId: photoResult.biophotoCommandId,
                 commandType: 'BIOPHOTO'
             });
+            commandRefs[commandRefs.length - 1].fallbackDeviceSerial = targetContext.targetDeviceSn;
         }
     }
 
