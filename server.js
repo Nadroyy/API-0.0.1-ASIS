@@ -1912,6 +1912,16 @@ function isAdmsCommandJsonlAuditEnabled() {
     return ['1', 'true', 'yes', 'y'].includes(normalized);
 }
 
+function isAdmsCommandJsonlFallbackEnabled() {
+    const rawValue = process.env.ENABLE_ADMS_COMMAND_JSONL_FALLBACK;
+    if (rawValue == null || String(rawValue).trim() === '') {
+        return true;
+    }
+
+    const normalized = String(rawValue).trim().toLowerCase();
+    return ['1', 'true', 'yes', 'y'].includes(normalized);
+}
+
 function saveAdmsCommandQueue(entries) {
     const fileContent = entries.map(entry => JSON.stringify(entry)).join('\n');
     fs.writeFileSync(admsCommandQueuePath, fileContent ? `${fileContent}\n` : '');
@@ -2374,6 +2384,10 @@ async function buildAdmsCommandsReadModelMysqlFirst(filters = {}, options = {}) 
         if (commands.length > 0) {
             return commands;
         }
+        // If fallback to JSONL is disabled, return empty result instead of falling back
+        if (!isAdmsCommandJsonlFallbackEnabled()) {
+            return [];
+        }
     } catch (error) {
         logStore.error('adms.command.mysql-readmodel.error', {
             context: 'commands-read-model',
@@ -2397,14 +2411,17 @@ async function readMysqlCommandsByPin(pin) {
 
     try {
         const commands = await readMysqlAdmsCommandsReadModel({}, { pin: normalizedPin });
-        return commands.length > 0 ? commands : readLegacyCommandsByPin(normalizedPin);
+        if (commands.length > 0) {
+            return commands;
+        }
+        return isAdmsCommandJsonlFallbackEnabled() ? readLegacyCommandsByPin(normalizedPin) : [];
     } catch (error) {
         logStore.error('adms.command.mysql-readmodel.error', {
             context: 'commands-by-pin',
             pin: normalizedPin,
             error: error.message
         });
-        return readLegacyCommandsByPin(normalizedPin);
+        return isAdmsCommandJsonlFallbackEnabled() ? readLegacyCommandsByPin(normalizedPin) : [];
     }
 }
 
@@ -2434,13 +2451,16 @@ async function readMysqlPendingCommands() {
         `);
 
         const commands = (Array.isArray(rows) ? rows : []).map(mapMysqlAdmsCommandRow).filter(Boolean);
-        return commands.length > 0 ? commands : getPendingAdmsCommands();
+        if (commands.length > 0) {
+            return commands;
+        }
+        return isAdmsCommandJsonlFallbackEnabled() ? getPendingAdmsCommands() : [];
     } catch (error) {
         logStore.error('adms.command.mysql-readmodel.error', {
             context: 'pending-commands',
             error: error.message
         });
-        return getPendingAdmsCommands();
+        return isAdmsCommandJsonlFallbackEnabled() ? getPendingAdmsCommands() : [];
     }
 }
 
