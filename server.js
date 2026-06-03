@@ -2994,6 +2994,28 @@ function toPublicPerson(person) {
     };
 }
 
+function resolveAdmsCommandDeviceSerial(command) {
+    if (!command || typeof command !== 'object') {
+        return null;
+    }
+
+    const serial = command.deviceSerial
+        || command.targetDeviceSn
+        || command.target_device_sn
+        || command.requestDeviceSn
+        || command.request_device_sn
+        || command.ackDeviceSn
+        || command.ack_device_sn
+        || null;
+
+    if (serial == null) {
+        return null;
+    }
+
+    const trimmed = String(serial || '').trim();
+    return trimmed.length > 0 ? trimmed : null;
+}
+
 function toPublicCommand(command) {
     if (!command) return null;
     return {
@@ -3002,7 +3024,7 @@ function toPublicCommand(command) {
         status: command.status,
         returnCode: command.returnCode ?? null,
         nuip: command.pin || null,
-        deviceSerial: command.targetDeviceSn || command.requestDeviceSn || command.ackDeviceSn || null,
+        deviceSerial: resolveAdmsCommandDeviceSerial(command),
         sentAt: command.sentAt || null,
         acknowledgedAt: command.acknowledgedAt || null
     };
