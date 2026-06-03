@@ -1691,8 +1691,41 @@ function buildScopedPersonPins(filters) {
     return pins;
 }
 
-function filterPendingSyncItems(filters) {
-    const pendingItems = getPendingSyncItems();
+async function buildScopedPersonPinsMysqlFirst(filters) {
+    if (filters.scopeAll) {
+        return null;
+    }
+
+    const pins = new Set();
+
+    readLatestAdmsPersons()
+        .filter(person => matchesScopedRecord(person, filters, { snFields: ['targetDeviceSn'], siteIdFields: ['siteId'] }))
+        .forEach(person => {
+            const pin = normalizePin(person.pin);
+            if (pin) {
+                pins.add(pin);
+            }
+        });
+
+    (await buildAdmsCommandsReadModelMysqlFirst(filters)).forEach(command => {
+        const pin = normalizePin(command.pin);
+        if (pin) {
+            pins.add(pin);
+        }
+    });
+
+    readAttendanceEntries({ sn: filters.activeSn, siteId: filters.siteId, limit: 0 }).forEach(entry => {
+        const pin = normalizePin(entry.pin);
+        if (pin) {
+            pins.add(pin);
+        }
+    });
+
+    return pins;
+}
+
+async function filterPendingSyncItems(filters) {
+    const pendingItems = await getPendingSyncItems();
     if (filters.scopeAll) {
         return pendingItems;
     }
@@ -2130,6 +2163,55 @@ function readAdmsCommandStatus(commandId) {
     };
 }
 
+function buildAdmsCommandStatusPayload(id, entry) {
+    if (!entry) {
+        return {
+            id,
+            found: false,
+            status: 'unknown',
+            reason: 'Comando no encontrado'
+        };
+    }
+
+    return {
+        id,
+        found: true,
+        status: String(entry.status || 'unknown'),
+        returnCode: entry.returnCode ?? null,
+        cmd: String(entry.command || '').split(':').slice(2).join(':').split(' ')[0] || null,
+        rawLine: entry.rawLine || entry.result || null,
+        timestamp: entry.acknowledgedAt || entry.sentAt || entry.createdAt || null,
+        commandType: entry.commandType || null,
+        pin: entry.pin || null,
+        targetDeviceSn: entry.targetDeviceSn || DEFAULT_TARGET_DEVICE_SN,
+        siteId: entry.siteId || DEFAULT_SITE_ID,
+        deviceName: entry.deviceName || null,
+        locationName: entry.locationName || null,
+        ackDeviceSn: entry.ackDeviceSn || null,
+        createdAt: entry.createdAt || null,
+        sentAt: entry.sentAt || null,
+        acknowledgedAt: entry.acknowledgedAt || null
+    };
+}
+
+async function readAdmsCommandStatusMysqlFirst(commandId) {
+    const id = String(commandId || '').trim();
+    try {
+        const entry = (await buildAdmsCommandsReadModelMysqlFirst({}, { commandId: id }))[0] || null;
+        if (entry) {
+            return buildAdmsCommandStatusPayload(id, entry);
+        }
+    } catch (error) {
+        logStore.error('adms.command.mysql-readmodel.error', {
+            context: 'command-status',
+            commandId: id,
+            error: error.message
+        });
+    }
+
+    return readAdmsCommandStatus(id);
+}
+
 async function readMysqlAdmsCommandStatus(commandId) {
     const id = normalizeUnsignedBigIntText(commandId);
     if (!id) {
@@ -2179,6 +2261,193 @@ async function readMysqlAdmsCommandStatus(commandId) {
         updatedAt: row.updated_at || null,
         source: 'mysql'
     };
+}
+
+function mapMysqlAdmsCommandRow(row) {
+    if (!row) {
+        return null;
+    }
+
+    return {
+        commandId: String(row.id || ''),
+        pin: String(row.pin_dispositivo || ''),
+        commandType: String(row.command_type || ''),
+        targetDeviceSn: normalizeRecordsScopeValue(row.target_device_sn),
+        ackDeviceSn: normalizeRecordsScopeValue(row.ack_device_sn),
+        requestDeviceSn: normalizeRecordsScopeValue(row.request_device_sn),
+        siteId: '',
+        command: String(row.command_text || ''),
+        sentAt: row.sent_at || null,
+        status: String(row.status || 'queued'),
+        statusSource: 'mysql',
+        returnCode: row.return_code ?? null,
+        acknowledgedAt: row.acknowledged_at || null,
+        result: row.raw_result || null,
+        error: row.error || null,
+        createdAt: row.created_at || null,
+        updatedAt: row.updated_at || null
+    };
+}
+
+async function readMysqlAdmsCommandsReadModel(filters = {}, options = {}) {
+    const pin = normalizePin(options.pin);
+    const commandId = normalizeRecordsScopeValue(options.commandId);
+    const commandType = normalizeRecordsScopeValue(options.commandType).toUpperCase();
+    const status = normalizeRecordsScopeValue(options.status);
+    const clauses = [];
+    const params = [];
+
+    if (commandId) {
+        clauses.push('id = ?');
+        params.push(commandId);
+    }
+
+    if (pin) {
+        clauses.push('pin_dispositivo = ?');
+        params.push(pin);
+    }
+
+    if (commandType) {
+        clauses.push('command_type = ?');
+        params.push(commandType);
+    }
+
+    if (status) {
+        clauses.push('status = ?');
+        params.push(status);
+    }
+
+    const activeSn = normalizeRecordsScopeValue(filters.activeSn || filters.targetDeviceSn || filters.sn);
+    if (activeSn) {
+        clauses.push('(target_device_sn = ? OR request_device_sn = ? OR ack_device_sn = ?)');
+        params.push(activeSn, activeSn, activeSn);
+    }
+
+    const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+    const [rows] = await db.query(`
+        SELECT
+            id,
+            command_type,
+            pin_dispositivo,
+            command_text,
+            purpose,
+            status,
+            return_code,
+            sent_at,
+            acknowledged_at,
+            ack_device_sn,
+            request_device_sn,
+            target_device_sn,
+            raw_result,
+            error,
+            created_at,
+            updated_at
+        FROM adms_commands
+        ${whereClause}
+        ORDER BY id DESC
+    `, params);
+
+    return (Array.isArray(rows) ? rows : [])
+        .map(mapMysqlAdmsCommandRow)
+        .filter(Boolean)
+        .filter(command => matchesScopedRecord(command, filters, {
+            snFields: ['targetDeviceSn', 'ackDeviceSn', 'requestDeviceSn'],
+            siteIdFields: ['siteId']
+        }));
+}
+
+async function buildAdmsCommandsReadModelMysqlFirst(filters = {}, options = {}) {
+    try {
+        const commands = await readMysqlAdmsCommandsReadModel(filters, options);
+        if (commands.length > 0) {
+            return commands;
+        }
+    } catch (error) {
+        logStore.error('adms.command.mysql-readmodel.error', {
+            context: 'commands-read-model',
+            error: error.message
+        });
+    }
+
+    return buildAdmsCommandsReadModel(filters, options);
+}
+
+function readLegacyCommandsByPin(pin) {
+    const normalizedPin = normalizePin(pin);
+    return readAdmsCommandQueue().filter(entry => String(entry.pin) === String(normalizedPin));
+}
+
+async function readMysqlCommandsByPin(pin) {
+    const normalizedPin = normalizePin(pin);
+    if (!normalizedPin) {
+        return [];
+    }
+
+    try {
+        const commands = await readMysqlAdmsCommandsReadModel({}, { pin: normalizedPin });
+        return commands.length > 0 ? commands : readLegacyCommandsByPin(normalizedPin);
+    } catch (error) {
+        logStore.error('adms.command.mysql-readmodel.error', {
+            context: 'commands-by-pin',
+            pin: normalizedPin,
+            error: error.message
+        });
+        return readLegacyCommandsByPin(normalizedPin);
+    }
+}
+
+async function readMysqlPendingCommands() {
+    try {
+        const [rows] = await db.query(`
+            SELECT
+                id,
+                command_type,
+                pin_dispositivo,
+                command_text,
+                purpose,
+                status,
+                return_code,
+                sent_at,
+                acknowledged_at,
+                ack_device_sn,
+                request_device_sn,
+                target_device_sn,
+                raw_result,
+                error,
+                created_at,
+                updated_at
+            FROM adms_commands
+            WHERE status IN ('queued', 'retry_pending', 'sent_waiting_ack')
+            ORDER BY id ASC
+        `);
+
+        const commands = (Array.isArray(rows) ? rows : []).map(mapMysqlAdmsCommandRow).filter(Boolean);
+        return commands.length > 0 ? commands : getPendingAdmsCommands();
+    } catch (error) {
+        logStore.error('adms.command.mysql-readmodel.error', {
+            context: 'pending-commands',
+            error: error.message
+        });
+        return getPendingAdmsCommands();
+    }
+}
+
+function computeDeviceSyncStatusFromCommands(commands = []) {
+    if (commands.length === 0) {
+        return 'unknown';
+    }
+    if (commands.some(entry => entry.status === 'failed')) {
+        return 'failed_on_device';
+    }
+    if (commands.every(entry => entry.status === 'accepted')) {
+        return 'accepted_by_device';
+    }
+    return 'pending_device';
+}
+
+async function readMysqlCommandSyncStatus(pin) {
+    const commands = await readMysqlCommandsByPin(pin);
+    return computeDeviceSyncStatusFromCommands(commands);
 }
 
 async function updateMysqlAdmsCommandAck(commandId, updates = {}) {
@@ -2282,16 +2551,7 @@ function getPendingAdmsCommands() {
 
 function computeDeviceSyncStatusForPin(pin) {
     const commands = readAdmsCommandQueue().filter(entry => String(entry.pin) === String(pin));
-    if (commands.length === 0) {
-        return 'unknown';
-    }
-    if (commands.some(entry => entry.status === 'failed')) {
-        return 'failed_on_device';
-    }
-    if (commands.every(entry => entry.status === 'accepted')) {
-        return 'accepted_by_device';
-    }
-    return 'pending_device';
+    return computeDeviceSyncStatusFromCommands(commands);
 }
 
 function updateAdmsPersonSyncStatus(pin, deviceSyncStatus) {
@@ -2346,7 +2606,8 @@ function markAttendanceConfirmedForPin(pin) {
 
 async function getAdmsSyncStatus(pin) {
     const localPerson = readLatestAdmsPersonByPin(pin);
-    const queueCommands = readAdmsCommandQueue().filter(entry => String(entry.pin) === String(pin));
+    const queueCommands = await readMysqlCommandsByPin(pin);
+    const deviceSyncStatus = localPerson ? await readMysqlCommandSyncStatus(pin) : 'unknown';
     const attendanceConfirmed = readAttendanceEntries({ pin }).length > 0;
     let personExistsInDb = false;
 
@@ -2361,7 +2622,7 @@ async function getAdmsSyncStatus(pin) {
         pin,
         personExistsInDb,
         personExistsLocal: Boolean(localPerson),
-        deviceSyncStatus: localPerson ? computeDeviceSyncStatusForPin(pin) : 'unknown',
+        deviceSyncStatus,
         attendanceConfirmed,
         commands: queueCommands.map(entry => ({
             commandType: entry.commandType,
@@ -2376,18 +2637,18 @@ async function getAdmsSyncStatus(pin) {
     };
 }
 
-function getPendingSyncItems() {
-    const pendingCommands = getPendingAdmsCommands();
-    const persons = Array.from(new Set(pendingCommands.map(entry => String(entry.pin))))
-        .map(pin => {
+async function getPendingSyncItems() {
+    const pendingCommands = await readMysqlPendingCommands();
+    const persons = await Promise.all(Array.from(new Set(pendingCommands.map(entry => String(entry.pin))))
+        .map(async pin => {
             const localPerson = readLatestAdmsPersonByPin(pin);
             return {
                 pin,
-                deviceSyncStatus: localPerson ? computeDeviceSyncStatusForPin(pin) : 'unknown',
+                deviceSyncStatus: localPerson ? await readMysqlCommandSyncStatus(pin) : 'unknown',
                 attendanceConfirmed: localPerson ? Boolean(localPerson.attendanceConfirmed) : false,
                 personExistsLocal: Boolean(localPerson)
             };
-        });
+        }));
 
     return {
         pendingCommands,
@@ -4029,12 +4290,29 @@ function resolveLatestKnownUserinfoProfile(pin, filters = {}) {
     return null;
 }
 
-function resolveDeviceProfileCommandStatuses(commandRefs = []) {
+async function resolveDeviceProfileCommandStatuses(commandRefs = []) {
+    const commandIds = commandRefs
+        .filter(Boolean)
+        .map(({ commandId }) => normalizeRecordsScopeValue(commandId))
+        .filter(Boolean);
+    const mysqlEntries = await Promise.all(commandIds.map(commandId =>
+        readMysqlAdmsCommandsReadModel({}, { commandId })
+            .then(entries => entries[0] || null)
+            .catch(error => {
+                logStore.error('adms.command.mysql-readmodel.error', {
+                    context: 'device-profile-command-status',
+                    commandId,
+                    error: error.message
+                });
+                return null;
+            })
+    ));
     const queueEntries = readAdmsCommandQueue();
+
     return commandRefs
         .filter(Boolean)
-        .map(({ commandId, commandType }) => {
-            const entry = queueEntries.find(item => String(item.commandId || '') === String(commandId || ''));
+        .map(({ commandId, commandType }, index) => {
+            const entry = mysqlEntries[index] || queueEntries.find(item => String(item.commandId || '') === String(commandId || ''));
             const rawStatus = String(entry?.status || 'queued');
             const status = rawStatus === 'accepted'
                 ? 'accepted'
@@ -4064,7 +4342,7 @@ async function buildApiPersonExistence(pin, siteId, targetDeviceSn) {
         : { scopeAll: true, siteId: '', activeSn: '' };
     const effectivePersons = await buildPersonsReadModel(commandFilters, { pin: normalizedPin });
     const effectiveScopedPerson = Array.isArray(effectivePersons?.records) ? (effectivePersons.records[0] || null) : null;
-    const scopedCommands = buildAdmsCommandsReadModel(commandFilters, { pin: normalizedPin });
+    const scopedCommands = await buildAdmsCommandsReadModelMysqlFirst(commandFilters, { pin: normalizedPin });
     const acceptedTimeline = scopedCommands
         .filter(command => String(command.status || '') === 'accepted')
         .map(command => ({
@@ -4484,7 +4762,7 @@ function upsertAdmsSiteRecord(siteId, payload = {}, options = {}) {
 }
 
 async function buildPersonsReadModel(filters, options = {}) {
-    const scopedPersonPins = buildScopedPersonPins(filters);
+    const scopedPersonPins = await buildScopedPersonPinsMysqlFirst(filters);
     const pinFilter = normalizePin(options.pin);
     const statusFilter = String(options.status || '').trim().toLowerCase();
 
@@ -4537,10 +4815,10 @@ async function buildPersonsReadModel(filters, options = {}) {
         const attendanceEntries = readAttendanceEntries();
         const attendanceByPin = new Set(attendanceEntries.map(entry => String(entry.pin)));
 
-        const enrichedPersons = mysqlPersons.map(person => {
+        const enrichedPersons = await Promise.all(mysqlPersons.map(async person => {
             const admsData = admsPersons.find(adms => adms.pin === person.pin);
             const photoInfo = resolvePersonPhotoInfo(person.pin, person.photo || admsData?.photo || '');
-            const deviceSyncStatus = admsData?.deviceSyncStatus || computeDeviceSyncStatusForPin(person.pin);
+            const deviceSyncStatus = admsData?.deviceSyncStatus || await readMysqlCommandSyncStatus(person.pin);
             const hasAttendance = attendanceByPin.has(String(person.pin));
             return {
                 nuip: admsData?.nuip || null,
@@ -4565,7 +4843,7 @@ async function buildPersonsReadModel(filters, options = {}) {
                 createdAt: person.createdAt,
                 updatedAt: person.updatedAt
             };
-        });
+        }));
 
         return {
             ...applyAdditionalFilters(applyPersonScope(enrichedPersons)),
@@ -4576,7 +4854,7 @@ async function buildPersonsReadModel(filters, options = {}) {
         const attendanceEntries = readAttendanceEntries();
         const attendanceByPin = new Set(attendanceEntries.map(entry => String(entry.pin)));
 
-        const enrichedPersons = admsPersons.map(person => {
+        const enrichedPersons = await Promise.all(admsPersons.map(async person => {
             const photoInfo = resolvePersonPhotoInfo(person.pin, person.photo || '');
             const hasAttendance = attendanceByPin.has(String(person.pin));
             return {
@@ -4596,13 +4874,13 @@ async function buildPersonsReadModel(filters, options = {}) {
                 hasPhoto: photoInfo.hasPhoto,
                 hasBiodata: false,
                 status: person.status || 'activo',
-                deviceSyncStatus: person.deviceSyncStatus || computeDeviceSyncStatusForPin(person.pin),
+                deviceSyncStatus: person.deviceSyncStatus || await readMysqlCommandSyncStatus(person.pin),
                 siteId: person.siteId || null,
                 targetDeviceSn: person.targetDeviceSn || null,
                 createdAt: person.createdAt,
                 updatedAt: person.updatedAt
             };
-        });
+        }));
 
         return {
             ...applyAdditionalFilters(applyPersonScope(enrichedPersons)),
@@ -4856,7 +5134,7 @@ async function performApiDeviceProfileUpdate({ nuip, body, file }) {
             password: wantsPassword,
             photo: wantsPhoto
         },
-        commands: resolveDeviceProfileCommandStatuses(commandRefs)
+        commands: await resolveDeviceProfileCommandStatuses(commandRefs)
     };
 }
 
@@ -5033,7 +5311,7 @@ async function performMysqlPersonPatchWithOptionalDeviceSync({ nuip, body, file,
         }
     }
 
-    const commandStatuses = resolveDeviceProfileCommandStatuses(commandRefs);
+    const commandStatuses = await resolveDeviceProfileCommandStatuses(commandRefs);
     const lastCommandId = commandStatuses.length > 0 ? commandStatuses[commandStatuses.length - 1].commandId : null;
     await ensureMysqlPersonDeviceRelation({
         personId: person.id,
@@ -6361,11 +6639,11 @@ function extractField(text, fieldName) {
 app.get('/adms/records/overview', asyncHandler(async (req, res) => {
     const filters = getRecordsScopeFilters(req);
     const [personasRows] = await db.query('SELECT COUNT(*) as count FROM usuarios');
-    const scopedPersonPins = buildScopedPersonPins(filters);
+    const scopedPersonPins = await buildScopedPersonPinsMysqlFirst(filters);
     const asistenciasEntries = readAttendanceEntries({ sn: filters.activeSn, siteId: filters.siteId, scopeAll: filters.scopeAll, limit: 0 });
     const devices = readAdmsDevices().filter(device => matchesScopedRecord(device, filters, { snFields: ['sn'], siteIdFields: ['siteId'] }));
-    const commands = buildAdmsCommandsReadModel(filters);
-    const pendingItems = filterPendingSyncItems(filters);
+    const commands = await buildAdmsCommandsReadModelMysqlFirst(filters);
+    const pendingItems = await filterPendingSyncItems(filters);
     const biodataEntries = buildBiodataSummary(filters);
     const photos = buildPhotosSummary(filters);
 
@@ -6383,7 +6661,7 @@ app.get('/adms/records/overview', asyncHandler(async (req, res) => {
 
 app.get('/adms/records/persons', asyncHandler(async (req, res) => {
     const filters = getRecordsScopeFilters(req);
-    const scopedPersonPins = buildScopedPersonPins(filters);
+    const scopedPersonPins = await buildScopedPersonPinsMysqlFirst(filters);
     const applyPersonScope = persons => {
         if (filters.scopeAll) {
             return { records: persons, legacyUnassignedCount: 0, message: '' };
@@ -6415,10 +6693,10 @@ app.get('/adms/records/persons', asyncHandler(async (req, res) => {
         const attendanceEntries = readAttendanceEntries();
         const attendanceByPin = new Set(attendanceEntries.map(entry => String(entry.pin)));
 
-        const enrichedPersons = mysqlPersons.map(person => {
+        const enrichedPersons = await Promise.all(mysqlPersons.map(async person => {
             const admsData = admsPersons.find(adms => adms.pin === person.pin);
             const photoInfo = resolvePersonPhotoInfo(person.pin, person.photo || admsData?.photo || '');
-            const deviceSyncStatus = admsData?.deviceSyncStatus || computeDeviceSyncStatusForPin(person.pin);
+            const deviceSyncStatus = admsData?.deviceSyncStatus || await readMysqlCommandSyncStatus(person.pin);
             const hasAttendance = attendanceByPin.has(String(person.pin));
             return {
                 pin: person.pin,
@@ -6440,7 +6718,7 @@ app.get('/adms/records/persons', asyncHandler(async (req, res) => {
                 createdAt: person.createdAt,
                 updatedAt: person.updatedAt
             };
-        });
+        }));
 
         const scoped = applyPersonScope(enrichedPersons);
         res.json({
@@ -6454,7 +6732,7 @@ app.get('/adms/records/persons', asyncHandler(async (req, res) => {
         const attendanceEntries = readAttendanceEntries();
         const attendanceByPin = new Set(attendanceEntries.map(entry => String(entry.pin)));
 
-        const enrichedPersons = admsPersons.map(person => {
+        const enrichedPersons = await Promise.all(admsPersons.map(async person => {
             const photoInfo = resolvePersonPhotoInfo(person.pin, person.photo || '');
             const hasAttendance = attendanceByPin.has(String(person.pin));
             return {
@@ -6473,11 +6751,11 @@ app.get('/adms/records/persons', asyncHandler(async (req, res) => {
                 hasPhoto: photoInfo.hasPhoto,
                 hasBiodata: false,
                 status: person.status || 'activo',
-                deviceSyncStatus: person.deviceSyncStatus || computeDeviceSyncStatusForPin(person.pin),
+                deviceSyncStatus: person.deviceSyncStatus || await readMysqlCommandSyncStatus(person.pin),
                 createdAt: person.createdAt,
                 updatedAt: person.updatedAt
             };
-        });
+        }));
         const scoped = applyPersonScope(enrichedPersons);
         res.json({
             ...scoped,
@@ -6511,7 +6789,7 @@ app.get('/adms/records/commands', asyncHandler(async (req, res) => {
     const commandId = req.query.commandId;
     const commandType = req.query.commandType;
     const status = req.query.status;
-    const commands = buildAdmsCommandsReadModel(filters, { pin, commandId, commandType, status });
+    const commands = await buildAdmsCommandsReadModelMysqlFirst(filters, { pin, commandId, commandType, status });
     res.json(commands.slice(0, 100)); // Limitar a 100
 }));
 
@@ -6524,9 +6802,9 @@ app.get('/adms/sync/status', asyncHandler(async (req, res) => {
     const [rows] = await db.query('SELECT COUNT(*) as count FROM usuarios WHERE pin = ?', [pin]);
     const personExistsInDb = rows[0].count > 0;
     const localPerson = readLatestAdmsPersonByPin(pin);
-    const queueCommands = readAdmsCommandQueue().filter(entry => String(entry.pin) === String(pin));
+    const queueCommands = await readMysqlCommandsByPin(pin);
     const attendanceConfirmed = readAttendanceEntries({ pin }).length > 0;
-    const deviceSyncStatus = localPerson ? computeDeviceSyncStatusForPin(pin) : 'unknown';
+    const deviceSyncStatus = localPerson ? await readMysqlCommandSyncStatus(pin) : 'unknown';
 
     res.json({
         pin,
@@ -6547,7 +6825,7 @@ app.get('/adms/sync/status', asyncHandler(async (req, res) => {
 
 app.get('/adms/sync/pending', asyncHandler(async (req, res) => {
     const filters = getRecordsScopeFilters(req);
-    const pendingItems = filterPendingSyncItems(filters);
+    const pendingItems = await filterPendingSyncItems(filters);
     res.json(pendingItems);
 }));
 
@@ -7643,7 +7921,7 @@ app.get('/api/v1/attendance', asyncHandler(async (req, res) => {
 
 app.get('/api/v1/commands', asyncHandler(async (req, res) => {
     const filters = getRecordsScopeFilters(req);
-    const records = buildAdmsCommandsReadModel(filters, {
+    const records = await buildAdmsCommandsReadModelMysqlFirst(filters, {
         pin: req.query.pin,
         commandType: req.query.type,
         status: req.query.status,
@@ -7669,15 +7947,15 @@ app.get('/api/v1/commands/status', asyncHandler(async (req, res) => {
 
     res.json({
         ok: true,
-        statuses: ids.map(id => readAdmsCommandStatus(id))
+        statuses: await Promise.all(ids.map(id => readAdmsCommandStatusMysqlFirst(id)))
     });
 }));
 
 app.get('/api/v1/commands/:id', asyncHandler(async (req, res) => {
     const filters = getRecordsScopeFilters(req);
-    const command = buildAdmsCommandsReadModel(filters, {
+    const command = (await buildAdmsCommandsReadModelMysqlFirst(filters, {
         commandId: req.params.id
-    })[0] || null;
+    }))[0] || null;
 
     if (!command) {
         return res.status(404).json({ ok: false, error: 'Comando no encontrado' });
