@@ -286,21 +286,7 @@ app.all('/iclock/getrequest', asyncHandler(async (req, res) => {
         updateAdmsDevice(sn, req.ip, req.originalUrl, req.method, req.get('User-Agent'));
     }
 
-    if (isMysqlCommandDispatchEnabled()) {
-        try {
-            const mysqlCommands = await flushPendingMysqlCommands(sn);
-            if (mysqlCommands) {
-                return sendPlainText(res, mysqlCommands);
-            }
-        } catch (error) {
-            logStore.error('adms.command.mysql-dispatch.error', {
-                sn: sn || null,
-                error: error.message
-            });
-        }
-    }
-
-    sendPlainText(res, flushPendingCommands(sn));
+    sendPlainText(res, await flushPendingCommandsForDevice(sn));
 }));
 
 app.all('/iclock/cdata', asyncHandler(async (req, res) => {
@@ -320,7 +306,7 @@ app.all('/iclock/cdata', asyncHandler(async (req, res) => {
     });
 
     if (!body) {
-        return sendPlainText(res, flushPendingCommands(sn));
+        return sendPlainText(res, await flushPendingCommandsForDevice(sn));
     }
 
     await procesarMensajeUser(body);
@@ -341,7 +327,7 @@ app.all('/iclock/cdata', asyncHandler(async (req, res) => {
         void webhookService.emitAttendanceCreatedWebhook(attendanceEntry);
     }
 
-    sendPlainText(res, flushPendingCommands(sn));
+    sendPlainText(res, await flushPendingCommandsForDevice(sn));
 }));
 
 app.all('/iclock/devicecmd', asyncHandler(async (req, res) => {
@@ -5699,6 +5685,24 @@ function sendPlainText(res, body) {
 
 function isMysqlCommandDispatchEnabled() {
     return String(process.env.ENABLE_MYSQL_COMMAND_DISPATCH || '').toLowerCase() === 'true';
+}
+
+async function flushPendingCommandsForDevice(deviceSn = '') {
+    if (isMysqlCommandDispatchEnabled()) {
+        try {
+            const mysqlCommands = await flushPendingMysqlCommands(deviceSn);
+            if (mysqlCommands) {
+                return mysqlCommands;
+            }
+        } catch (error) {
+            logStore.error('adms.command.mysql-dispatch.error', {
+                sn: deviceSn || null,
+                error: error.message
+            });
+        }
+    }
+
+    return flushPendingCommands(deviceSn);
 }
 
 async function flushPendingMysqlCommands(deviceSn = '') {
