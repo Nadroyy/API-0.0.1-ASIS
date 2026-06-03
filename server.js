@@ -472,7 +472,7 @@ app.post('/adms/queue-user', asyncHandler(async (req, res) => {
     }
 
     const targetContext = resolveCommandTargetMetadata(req.body);
-    const userCommand = enqueueAdmsUserinfoCommand({
+    const userCommand = await enqueueAdmsUserinfoCommand({
         pin,
         name: admsName,
         password: admsPassword,
@@ -653,7 +653,7 @@ app.post('/adms/queue-user-verify', asyncHandler(async (req, res) => {
     }
 
     const targetContext = resolveCommandTargetMetadata(req.body);
-    const userCommand = enqueueAdmsUserinfoCommand({
+    const userCommand = await enqueueAdmsUserinfoCommand({
         pin,
         name: admsName,
         password: admsPassword,
@@ -719,7 +719,7 @@ app.post('/adms/enroll-user-with-face', asyncHandler(async (req, res) => {
     }
 
     const targetContext = resolveCommandTargetMetadata(req.body);
-    const userCommand = enqueueAdmsUserinfoCommand({
+    const userCommand = await enqueueAdmsUserinfoCommand({
         pin,
         name,
         password,
@@ -1814,9 +1814,7 @@ function readAdmsCommandSequenceState() {
     try {
         const parsed = JSON.parse(fs.readFileSync(admsCommandSequencePath, 'utf8'));
         const nextCommandId = parseInteger(parsed.nextCommandId, NaN);
-        return Number.isFinite(nextCommandId) && nextCommandId > 0
-            ? { nextCommandId, updatedAt: parsed.updatedAt || null }
-            : null;
+        return Number.isFinite(nextCommandId) && nextCommandId > 0 ? nextCommandId : null;
     } catch (_error) {
         return null;
     }
@@ -2061,6 +2059,11 @@ function updateDeleteAuditForDeviceCommand(commandId, updates) {
 function appendAdmsCommandQueueEntry(entry) {
     if (isAdmsCommandJsonlAuditEnabled()) {
         appendJsonLine(admsCommandQueuePath, entry);
+    }
+    // If the entry was already persisted to MySQL by a DB-first flow,
+    // avoid a duplicate insert from the append path.
+    if (entry && entry.mysqlPersisted) {
+        return;
     }
     void insertMysqlAdmsCommand(entry);
 }
@@ -5229,7 +5232,7 @@ async function performApiDeviceProfileUpdate({ nuip, body, file }) {
         });
     } else {
         if (needsUserinfo) {
-            const userCommand = enqueueAdmsUserinfoCommand({
+            const userCommand = await enqueueAdmsUserinfoCommand({
                 pin: pinDispositivo,
                 name: nextName,
                 password: nextPassword,
@@ -5442,8 +5445,8 @@ async function performMysqlPersonPatchWithOptionalDeviceSync({ nuip, body, file,
             fallbackDeviceSerial: targetContext.targetDeviceSn
         });
     } else {
-        if (needsUserinfo) {
-            const userCommand = enqueueAdmsUserinfoCommand({
+            if (needsUserinfo) {
+            const userCommand = await enqueueAdmsUserinfoCommand({
                 pin: pinDispositivo,
                 name: admsName,
                 password: admsPassword,
@@ -5701,7 +5704,46 @@ function normalizeAdmsQueueField(value, maxLength, useNameSanitizer) {
     return baseValue.replace(/[\t\r\n=]/g, '').slice(0, maxLength);
 }
 
-function enqueueAdmsUserinfoCommand({ pin, name, password, verify, targetDeviceSn, siteId, deviceName, locationName }) {
+async function enqueueAdmsUserinfoCommand({ pin, name, password, verify, targetDeviceSn, siteId, deviceName, locationName }) {
+    // DB-first path: use MySQL to obtain the ID if enabled
+    if (isAdmsCommandDbIdFirstEnabled()) {
+        try {
+            const draft = await createMysqlAdmsCommandDraft({
+                pinDispositivo: pin,
+                commandType: 'USERINFO',
+                purpose: null,
+                targetDeviceSn,
+                siteId,
+                buildCommandText: async (id) => `C:${id}:DATA UPDATE USERINFO PIN=${pin}\tName=${name}\tPri=0\tPasswd=${password}\tCard=\tGrp=1\tTZ=0000000100000000\tVerify=${verify}\tViceCard=\tStartDatetime=0\tEndDatetime=0`
+            });
+
+            // Enqueue locally but mark as already persisted in MySQL to avoid duplicate insert
+            enqueueAdmsCommandEntry({
+                commandId: draft.commandId,
+                commandType: 'USERINFO',
+                pin,
+                command: draft.command,
+                targetDeviceSn,
+                siteId,
+                deviceName,
+                locationName,
+                mysqlPersisted: true
+            });
+
+            return {
+                commandId: draft.commandId,
+                command: draft.command
+            };
+        } catch (error) {
+            logStore.error('adms.command.db-id-first.userinfo.error', {
+                error: error && error.message ? error.message : String(error),
+                params: { pin, name, siteId, targetDeviceSn }
+            });
+            // fall through to legacy path
+        }
+    }
+
+    // Legacy file-first ID allocation
     const commandId = allocateAdmsCommandId();
     const command = `C:${commandId}:DATA UPDATE USERINFO PIN=${pin}\tName=${name}\tPri=0\tPasswd=${password}\tCard=\tGrp=1\tTZ=0000000100000000\tVerify=${verify}\tViceCard=\tStartDatetime=0\tEndDatetime=0`;
     enqueueAdmsCommandEntry({
@@ -5735,7 +5777,7 @@ async function enqueueAdmsPhotoEnrollment({ pin, name, password, tempFilePath, i
     });
     const imageBase64 = imageBuffer.toString('base64');
     const imageSize = imageBuffer.length;
-    const userCommand = enqueueAdmsUserinfoCommand({
+    const userCommand = await enqueueAdmsUserinfoCommand({
         pin,
         name,
         password,
