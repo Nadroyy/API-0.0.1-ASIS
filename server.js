@@ -1902,6 +1902,16 @@ function readAdmsCommandQueue() {
         }));
 }
 
+function isAdmsCommandJsonlAuditEnabled() {
+    const rawValue = process.env.ENABLE_ADMS_COMMAND_JSONL_AUDIT;
+    if (rawValue == null || String(rawValue).trim() === '') {
+        return true;
+    }
+
+    const normalized = String(rawValue).trim().toLowerCase();
+    return ['1', 'true', 'yes', 'y'].includes(normalized);
+}
+
 function saveAdmsCommandQueue(entries) {
     const fileContent = entries.map(entry => JSON.stringify(entry)).join('\n');
     fs.writeFileSync(admsCommandQueuePath, fileContent ? `${fileContent}\n` : '');
@@ -1937,7 +1947,9 @@ function updateDeleteAuditForDeviceCommand(commandId, updates) {
 }
 
 function appendAdmsCommandQueueEntry(entry) {
-    appendJsonLine(admsCommandQueuePath, entry);
+    if (isAdmsCommandJsonlAuditEnabled()) {
+        appendJsonLine(admsCommandQueuePath, entry);
+    }
     void insertMysqlAdmsCommand(entry);
 }
 
