@@ -1922,6 +1922,108 @@ function isAdmsCommandJsonlFallbackEnabled() {
     return ['1', 'true', 'yes', 'y'].includes(normalized);
 }
 
+function isAdmsCommandDbIdFirstEnabled() {
+    const rawValue = process.env.ENABLE_ADMS_COMMAND_DB_ID_FIRST;
+    if (rawValue == null || String(rawValue).trim() === '') {
+        return false;
+    }
+    const normalized = String(rawValue).trim().toLowerCase();
+    return ['1', 'true', 'yes', 'y'].includes(normalized);
+}
+
+async function createMysqlAdmsCommandDraft(params = {}) {
+    const {
+        entidadId = null,
+        dispositivoId = null,
+        personaId = null,
+        pinDispositivo = null,
+        commandType,
+        purpose = null,
+        targetDeviceSn = null,
+        siteId = null,
+        buildCommandText
+    } = params || {};
+
+    if (!commandType) {
+        throw new Error('commandType is required for createMysqlAdmsCommandDraft');
+    }
+
+    if (typeof buildCommandText !== 'function') {
+        throw new Error('buildCommandText function is required for createMysqlAdmsCommandDraft');
+    }
+
+    let connection;
+    try {
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        const [result] = await connection.query(`
+            INSERT INTO adms_commands (
+                entidad_id,
+                dispositivo_id,
+                persona_id,
+                pin_dispositivo,
+                command_type,
+                purpose,
+                status,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, 'queued', CURRENT_TIMESTAMP)
+        `, [entidadId, dispositivoId, personaId, pinDispositivo, commandType, purpose]);
+
+        const insertId = result && (result.insertId || result[0] && result[0].insertId) ? (result.insertId || result[0].insertId) : null;
+        if (!insertId) {
+            await connection.rollback();
+            throw new Error('Failed to obtain insertId for adms_commands draft');
+        }
+
+        const commandText = String(await buildCommandText(insertId));
+        if (!commandText.startsWith(`C:${insertId}:`)) {
+            await connection.rollback();
+            throw new Error('Built command_text does not start with expected prefix C:<id>:');
+        }
+
+        await connection.query(`
+            UPDATE adms_commands
+            SET command_text = ?, target_device_sn = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `, [commandText, targetDeviceSn || null, insertId]);
+
+        await connection.commit();
+
+        return {
+            commandId: String(insertId),
+            commandType,
+            pin: pinDispositivo || null,
+            command: commandText,
+            targetDeviceSn: targetDeviceSn || null,
+            purpose: purpose || null,
+            status: 'queued'
+        };
+    } catch (error) {
+        try {
+            if (connection) await connection.rollback();
+        } catch (_e) {}
+        logStore.error('adms.command.mysql-draft.error', {
+            error: error && error.message ? error.message : String(error),
+            params: {
+                entidadId,
+                dispositivoId,
+                personaId,
+                pinDispositivo,
+                commandType,
+                purpose,
+                targetDeviceSn,
+                siteId
+            }
+        });
+        throw error;
+    } finally {
+        try {
+            if (connection) connection.release();
+        } catch (_e) {}
+    }
+}
+
 function saveAdmsCommandQueue(entries) {
     const fileContent = entries.map(entry => JSON.stringify(entry)).join('\n');
     fs.writeFileSync(admsCommandQueuePath, fileContent ? `${fileContent}\n` : '');
